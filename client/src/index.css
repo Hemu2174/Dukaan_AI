@@ -3,16 +3,16 @@
 @import "./styles/theme.css";
 
 :root {
-  --bg-main: #FFFFFF;
-  --bg-section: #F7F7F7;
-  --bg-card: #FFFFFF;
-  --border: #E5E5E5;
-  --text-primary: #0B0B0B;
-  --text-secondary: #6F6F6F;
-  --label: #9CA3AF;
-  --accent: #84cc16;
-  --money-pos: #16a34a;
-  --money-neg: #dc2626;
+  --bg-main: #0B0B0B;
+  --bg-section: #0F0F0F;
+  --bg-card: #161616;
+  --border: #262626;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1A1;
+  --label: #6F6F6F;
+  --accent: #A3FF12;
+  --money-pos: #22FF88;
+  --money-neg: #FF5C5C;
 }
 
 .dark {
@@ -27,6 +27,20 @@
   --money-pos: #22FF88;
   --money-neg: #FF5C5C;
 }
+
+:root:not(.dark) {
+  --bg-main: #FFFFFF;
+  --bg-section: #F7F7F7;
+  --bg-card: #FFFFFF;
+  --border: #E5E5E5;
+  --text-primary: #0B0B0B;
+  --text-secondary: #6F6F6F;
+  --label: #9CA3AF;
+  --accent: #84cc16;
+  --money-pos: #16a34a;
+  --money-neg: #dc2626;
+}
+
 
 @theme {
   --color-dark: var(--bg-main);
