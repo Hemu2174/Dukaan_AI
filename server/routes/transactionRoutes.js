@@ -194,4 +194,64 @@ router.get('/week', async (req, res) => {
   }
 });
 
+// GET /api/transactions/dashboard — live summary for dashboard cards
+router.get('/dashboard', async (req, res) => {
+  try {
+    let ownerId = req.user.user_id;
+
+    if (req.user.role === 'helper') {
+      const { data: helper } = await supabase
+        .from('helpers')
+        .select('owner_user_id')
+        .eq('id', req.user.user_id)
+        .single();
+      if (helper) ownerId = helper.owner_user_id;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', ownerId)
+      .gte('created_at', today.toISOString())
+      .lt('created_at', tomorrow.toISOString());
+
+    if (error) throw error;
+
+    let totalSales = 0;
+    let totalExpense = 0;
+    let cash = 0;
+    let upi = 0;
+    let udhari = 0;
+
+    (data || []).forEach(t => {
+      const amt = Number(t.amount) || 0;
+
+      if (t.type === 'income') totalSales += amt;
+      else totalExpense += amt;
+
+      const delta = t.type === 'income' ? amt : -amt;
+      if (t.payment_method === 'cash')   cash   += delta;
+      if (t.payment_method === 'upi')    upi    += delta;
+      if (t.payment_method === 'udhari') udhari += delta;
+    });
+
+    res.json({
+      totalSales,
+      totalExpense,
+      profit: totalSales - totalExpense,
+      cash,
+      upi,
+      udhari,
+    });
+  } catch (error) {
+    console.error('Dashboard summary error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
