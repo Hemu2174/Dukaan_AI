@@ -40,23 +40,28 @@ const AlertBanner = () => {
   if (!alertData || dismissed) return null;
 
   return (
-    <div className="bg-yellow-100 border border-yellow-300 mt-4 sm:mt-6 rounded-xl shadow-sm p-4 sm:p-5 relative animate-fade-in-up">
-      <div className="flex items-start gap-3">
-        <span className="text-xl mt-0.5">⚠️</span>
+    <div className="bg-card border border-border mt-4 sm:mt-6 rounded-[1.25rem] shadow-xl p-5 sm:p-6 relative animate-fade-in-up overflow-hidden group">
+      <div className="absolute top-0 left-0 w-1 h-full bg-neon/20 group-hover:bg-neon transition-colors" />
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-section flex items-center justify-center text-xl border border-border">
+          ⚡
+        </div>
         <div className="flex-1">
-          <h4 className="font-bold text-yellow-900 text-sm sm:text-base mb-1">వ్యాపార సూచన (Business Alert)</h4>
-          <p className="text-yellow-800 text-sm sm:text-base leading-relaxed">
+          <h4 className="font-heading font-medium text-text-primary text-lg sm:text-xl mb-1 italic">వ్యాపార సూచన (Business Alert)</h4>
+          <p className="text-text-secondary text-sm sm:text-base leading-relaxed font-sans font-light">
             {alertData.alert_text}
           </p>
         </div>
         <button 
           onClick={handleDismiss}
-          className="text-yellow-600 hover:text-yellow-900 bg-yellow-200/50 hover:bg-yellow-200 p-1 rounded-full transition-colors"
+          className="text-label hover:text-text-primary bg-dark p-2 rounded-xl border border-border transition-all"
         >
-          ✖
+          <span className="text-[10px]">✖</span>
         </button>
       </div>
     </div>
+
+
   );
 };
 

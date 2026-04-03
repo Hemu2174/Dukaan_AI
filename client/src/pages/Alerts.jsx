@@ -55,36 +55,47 @@ const Alerts = () => {
   if (loading) return <div className="p-6 text-center text-gray-500">లోడ్ అవుతోంది... (Loading...)</div>;
 
   return (
-    <div className="px-3 py-2 h-full pb-24 w-full bg-gray-50">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">సూచనలు <br/><span className="text-sm font-normal text-gray-500">(Alerts History)</span></h1>
-        <button onClick={testInsert} className="bg-blue-600 text-white px-3 py-1 text-sm rounded shadow-sm hover:bg-blue-700">Test Insert</button>
+    <div className="min-h-screen w-full bg-dark pb-32">
+      <div className="px-6 py-6 border-b border-border bg-section mb-10">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+             <div className="w-2 h-2 bg-neon rounded-full shadow-[0_0_10px_rgba(163,255,18,0.5)]"></div>
+             <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">
+              సూచనలు <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Alerts)</span>
+            </h1>
+          </div>
+          <button onClick={testInsert} className="text-[10px] uppercase font-black tracking-widest text-neon/60 hover:text-neon transition-colors px-3 py-1 border border-neon/20 rounded-md">Safety Sync</button>
+        </div>
       </div>
       
-      {alerts.length === 0 ? (
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
-            <span className="text-4xl mb-3 opacity-50 block">📭</span>
-            <p className="text-gray-500 text-sm">ఎలాంటి సూచనలూ లేవు (No alerts available yet)</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {alerts.map(a => (
-            <div key={a.id} className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 shadow-sm relative">
-              <button 
-                onClick={() => handleDismiss(a.id)}
-                className="absolute top-4 right-4 text-yellow-600 hover:text-yellow-900 transition-colors bg-white/50 rounded-full w-6 h-6 flex items-center justify-center"
-              >
-                ✖
-              </button>
-              <div className="flex items-center gap-2 mb-2 text-yellow-800 text-xs font-semibold">
-                <span>⚠️</span>
-                <span>{new Date(a.created_at).toLocaleDateString()}</span>
+      <div className="px-6">
+        {alerts.length === 0 ? (
+          <div className="bg-card p-12 rounded-[2rem] border border-border border-dashed text-center flex flex-col items-center justify-center h-80 shadow-2xl relative overflow-hidden group hover:border-neon/30 transition-all">
+              <div className="absolute inset-0 bg-neon/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="text-5xl mb-6 opacity-20 grayscale">📭</span>
+              <p className="text-text-secondary text-sm font-heading italic tracking-wide">Infrastructure reports all clear.</p>
+              <p className="text-[10px] text-label uppercase font-black tracking-widest mt-6 opacity-50">No critical anomalies detected</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {alerts.map(a => (
+              <div key={a.id} className="bg-card border border-border rounded-2xl p-6 shadow-xl relative group hover:border-neon/30 transition-all">
+                <button 
+                  onClick={() => handleDismiss(a.id)}
+                  className="absolute top-6 right-6 text-label hover:text-red-400 transition-all bg-dark rounded-full w-8 h-8 flex items-center justify-center border border-border group-hover:border-neon/20 shadow-sm"
+                >
+                  ✖
+                </button>
+                <div className="flex items-center gap-2 mb-4">
+                   <div className="w-1.5 h-1.5 rounded-full bg-money-neg animate-pulse"></div>
+                   <span className="text-[10px] uppercase font-black tracking-widest text-label">{new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="text-text-primary text-base font-sans font-light leading-relaxed pr-10 opacity-90">{a.alert_text}</p>
               </div>
-              <p className="text-yellow-900 text-sm leading-relaxed pr-6">{a.alert_text}</p>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

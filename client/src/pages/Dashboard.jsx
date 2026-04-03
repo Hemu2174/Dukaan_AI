@@ -6,20 +6,19 @@ const TransactionCard = ({ t }) => {
   const isIncome = t.type === "income";
 
   return (
-    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-50 mb-2 hover:shadow-md transition-shadow">
+    <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border mb-3 hover:border-neon/30 transition-all duration-300 shadow-sm">
       <div>
-        <p className="font-semibold text-gray-800 text-sm">{t.category || "General"}</p>
-        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{t.payment_method}</p>
+        <p className="text-text-primary text-base font-medium font-heading tracking-wide italic">{t.category || "General"}</p>
+        <p className="text-label text-[10px] uppercase font-bold tracking-widest">{t.payment_method}</p>
       </div>
 
       <div
-        className={`font-bold tracking-tight text-sm ${
-          isIncome ? "text-green-600" : "text-red-500"
+        className={`font-semibold text-lg tracking-tight ${
+          isIncome ? "text-money-pos" : "text-money-neg"
         }`}
       >
         {isIncome ? "+" : "-"}₹{t.amount}
       </div>
-
     </div>
   );
 };
@@ -38,8 +37,8 @@ const Dashboard = () => {
     try {
       const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
       const [txRes, splRes] = await Promise.all([
-        fetch('http://localhost:5000/api/transactions/today', { headers }),
-        fetch('http://localhost:5000/api/payments/split', { headers })
+        fetch('/api/transactions/today', { headers }),
+        fetch('/api/payments/split', { headers })
       ]);
       
       if (txRes.ok) setTransactions(await txRes.json());
@@ -63,85 +62,106 @@ const Dashboard = () => {
     .filter((t) => t.payment_method === "udhari" || t.payment_method === "cash")
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  if (loading) return <div className="p-6 text-center text-gray-500">Loading dashboard...</div>;
+  if (loading) return <div className="p-10 text-center text-text-secondary animate-pulse italic font-heading">Analyzing activity...</div>;
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 pb-24">
+    <div className="min-h-screen w-full bg-dark pb-32">
       <ReorderBanner />
       <AlertBanner />
       
-      <div className="px-3 py-2">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Today's Summary</h1>
-          <button onClick={fetchData} className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm active:scale-90 transition-transform hover:shadow-md border border-gray-100" title="Refresh">
+      <div className="px-6 py-6 border-b border-border bg-section mb-6">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+             <div className="w-2 h-2 bg-neon rounded-full shadow-[0_0_10px_rgba(163,255,18,0.5)]"></div>
+             <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">Daily Activity</h1>
+          </div>
+          <button onClick={fetchData} className="w-10 h-10 flex items-center justify-center bg-card rounded-xl border border-border active:scale-95 transition-all hover:border-neon/30" title="Refresh">
             <span className="text-lg">🔄</span>
           </button>
         </div>
-      
+      </div>
+
+      <div className="px-6">
       {/* Payment Split Dashboard */}
-      <div className="grid grid-cols-3 gap-2 mb-6 w-full">
-        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-[10px] uppercase font-bold text-green-700 mb-1 z-10">Cash</span>
-          <div className="flex flex-col items-center z-10">
-            <span className="text-[10px] text-green-600 font-bold">+{splits.cash.income}</span>
-            <span className="text-[10px] text-red-500 font-bold">-{splits.cash.expense}</span>
-            <div className="h-[1px] w-8 bg-gray-100 my-0.5"></div>
-            <span className="text-sm font-bold text-gray-900">₹{splits.cash.net}</span>
+      <div className="grid grid-cols-3 gap-3 mb-10 w-full">
+        <div className="bg-card rounded-xl p-4 border border-border flex flex-col items-center justify-center relative overflow-hidden group hover:border-neon/30 transition-all shadow-sm">
+          <span className="text-[10px] uppercase font-bold text-neon mb-3 tracking-widest">Cash</span>
+          <div className="flex flex-col items-center">
+            <div className="flex gap-2 mb-2">
+              <span className="text-[10px] text-money-pos font-bold">+{splits.cash.income}</span>
+              <span className="text-[10px] text-money-neg font-bold">-{splits.cash.expense}</span>
+            </div>
+            <div className="h-[1px] w-8 bg-border my-1"></div>
+            <span className="text-xl font-heading font-bold text-text-primary tracking-tight italic">₹{splits.cash.net}</span>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-[10px] uppercase font-bold text-blue-700 mb-1 z-10">UPI</span>
-          <div className="flex flex-col items-center z-10">
-            <span className="text-[10px] text-green-600 font-bold">+{splits.upi.income}</span>
-            <span className="text-[10px] text-red-500 font-bold">-{splits.upi.expense}</span>
-            <div className="h-[1px] w-8 bg-gray-100 my-0.5"></div>
-            <span className="text-sm font-bold text-gray-900">₹{splits.upi.net}</span>
+
+        <div className="bg-card rounded-xl p-4 border border-border flex flex-col items-center justify-center relative overflow-hidden group hover:border-neon/30 transition-all shadow-sm">
+          <span className="text-[10px] uppercase font-bold text-neon mb-3 tracking-widest">Digital</span>
+          <div className="flex flex-col items-center">
+            <div className="flex gap-2 mb-2">
+              <span className="text-[10px] text-money-pos font-bold">+{splits.upi.income}</span>
+              <span className="text-[10px] text-money-neg font-bold">-{splits.upi.expense}</span>
+            </div>
+            <div className="h-[1px] w-8 bg-border my-1"></div>
+            <span className="text-xl font-heading font-bold text-text-primary tracking-tight italic">₹{splits.upi.net}</span>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-[10px] uppercase font-bold text-orange-700 mb-1 z-10">Udhari</span>
-          <div className="flex flex-col items-center justify-center h-full z-10">
-            <span className="text-sm font-bold text-gray-900">₹{splits.udhari}</span>
-            <span className="text-[10px] text-gray-400 mt-1">Pending</span>
+
+        <div className="bg-card rounded-xl p-4 border border-border flex flex-col items-center justify-center relative overflow-hidden group hover:border-neon/30 transition-all shadow-sm">
+          <span className="text-[10px] uppercase font-bold text-money-neg mb-3 tracking-widest opacity-80">Udhari</span>
+          <div className="flex flex-col items-center justify-center pt-1">
+            <span className="text-xl font-heading font-bold text-text-primary tracking-tight italic">₹{splits.udhari}</span>
+            <span className="text-[8px] text-label uppercase tracking-widest font-bold mt-1">Pending</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-border">
         
         {/* UPI SECTION */}
-        <div className="bg-blue-50/30 p-2 rounded-xl">
-          <h3 className="font-bold text-blue-600 mb-3 text-xs uppercase tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-            UPI Activity
+        <div className="pt-6 md:pt-0">
+          <h3 className="font-heading font-medium text-text-primary mb-6 text-xl italic flex items-center gap-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-neon"></span>
+            UPI Real-time
           </h3>
-          {upiTransactions.length === 0 ? (
-            <p className="text-gray-400 text-xs italic p-4 bg-white/50 rounded-lg border border-dashed border-gray-200 text-center">No UPI activity today</p>
-          ) : (
-            upiTransactions.map((t) => (
-              <TransactionCard key={t.id} t={t} />
-            ))
-          )}
+          <div className="space-y-1">
+            {upiTransactions.length === 0 ? (
+              <div className="text-label text-xs italic p-12 bg-card rounded-2xl border border-dashed border-border text-center">
+                Quiet day on UPI
+              </div>
+            ) : (
+              upiTransactions.map((t) => (
+                <TransactionCard key={t.id} t={t} />
+              ))
+            )}
+          </div>
         </div>
 
         {/* UDHARI SECTION */}
-        <div className="bg-orange-50/30 p-2 rounded-xl">
-          <h3 className="font-bold text-orange-600 mb-3 text-xs uppercase tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-            Udhari Activity
+        <div className="pt-10 md:pt-0 md:pl-8">
+          <h3 className="font-heading font-medium text-text-primary mb-6 text-xl italic flex items-center gap-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-money-neg"></span>
+            Udhari & Cash
           </h3>
-          {udhariTransactions.length === 0 ? (
-            <p className="text-gray-400 text-xs italic p-4 bg-white/50 rounded-lg border border-dashed border-gray-200 text-center">No Udhari activity today</p>
-          ) : (
-            udhariTransactions.map((t) => (
-              <TransactionCard key={t.id} t={t} />
-            ))
-          )}
+          <div className="space-y-1">
+            {udhariTransactions.length === 0 ? (
+              <div className="text-label text-xs italic p-12 bg-card rounded-2xl border border-dashed border-border text-center">
+                No cash/credit logs
+              </div>
+            ) : (
+              udhariTransactions.map((t) => (
+                <TransactionCard key={t.id} t={t} />
+              ))
+            )}
+          </div>
         </div>
 
       </div>
       </div>
     </div>
+
+
   );
 };
 

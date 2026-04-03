@@ -42,58 +42,60 @@ const Login = () => {
   };
 
   return (
-    <div className="p-4 h-full flex flex-col justify-center min-h-[calc(100dvh-160px)] w-full">
-      <div className="bg-white rounded-xl shadow border border-gray-100 p-5 w-full transition-all">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Welcome back</h2>
-        <p className="text-gray-400 sm:text-gray-500 mb-6 text-xs sm:text-sm">Sign in to manage your dukaan.</p>
+    <div className="p-6 h-full flex flex-col justify-center min-h-[calc(100dvh-160px)] w-full bg-dark">
+      <div className="bg-card rounded-2xl border border-border p-10 w-full max-w-md mx-auto transition-all shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 left-0 w-full h-1 bg-neon/10 group-hover:bg-neon transition-all" />
         
-        <div className="flex mb-6 bg-gray-100 p-1 rounded-lg">
+        <h2 className="text-3xl font-heading font-medium text-text-primary mb-2 italic">Welcome Back</h2>
+        <p className="text-text-secondary mb-10 text-sm leading-relaxed font-sans font-light">Sign in to your DukaanAI dashboard and track your growth trajectory.</p>
+        
+        <div className="flex mb-10 bg-dark p-1.5 rounded-xl border border-border shadow-inner">
           <button 
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${!isHelper ? 'bg-white shadow-sm text-primary' : 'text-gray-500'}`}
+            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${!isHelper ? 'bg-card text-neon shadow-xl border border-border' : 'text-label hover:text-text-primary'}`}
             onClick={() => setIsHelper(false)}
           >
-            Owner
+            Store Owner
           </button>
           <button 
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${isHelper ? 'bg-white shadow-sm text-primary' : 'text-gray-500'}`}
+            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${isHelper ? 'bg-card text-neon shadow-xl border border-border' : 'text-label hover:text-text-primary'}`}
             onClick={() => setIsHelper(true)}
           >
-            Helper
+            Staff Helper
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {!isHelper ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="email">Email</label>
+            <div className="focus-within:translate-x-1 transition-transform">
+              <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-3" htmlFor="email">Email Address</label>
               <input 
                 type="email" 
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email" 
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                placeholder="your@email.com" 
+                className="w-full bg-dark px-5 py-4 rounded-xl border border-border focus:outline-none focus:border-neon/50 transition-all text-sm text-text-primary placeholder-label/30"
                 required
               />
             </div>
           ) : (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="ownerId">Store ID</label>
+            <div className="focus-within:translate-x-1 transition-transform">
+              <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-3" htmlFor="ownerId">Kirana Store ID</label>
               <input 
                 type="text" 
                 id="ownerId"
                 value={ownerId}
                 onChange={(e) => setOwnerId(e.target.value)}
-                placeholder="Enter Store ID" 
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                placeholder="STORE-123" 
+                className="w-full bg-dark px-5 py-4 rounded-xl border border-border focus:outline-none focus:border-neon/50 transition-all text-sm text-text-primary placeholder-label/30"
                 required
               />
             </div>
           )}
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="password">
-              {!isHelper ? 'Password' : 'PIN'}
+          <div className="focus-within:translate-x-1 transition-transform">
+            <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-3" htmlFor="password">
+              {!isHelper ? 'Security Password' : 'Staff PIN'}
             </label>
             <input 
               type="password" 
@@ -101,32 +103,29 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••" 
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+              className="w-full bg-dark px-5 py-4 rounded-xl border border-border focus:outline-none focus:border-neon/50 transition-all text-sm text-text-primary placeholder-label/30"
               required
             />
-            {!isHelper && (
-              <div className="flex justify-end mt-1.5">
-                <a href="#" className="text-xs font-medium text-primary hover:text-primary-dark">Forgot password?</a>
-              </div>
-            )}
           </div>
           
           <button 
             type="submit" 
-            className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-xl shadow-md transition-all mt-4 active:scale-[0.98] focus:ring-2 focus:ring-primary/50 focus:outline-none"
+            className="w-full bg-neon text-dark font-black py-4 rounded-xl shadow-xl transition-all mt-6 active:scale-95 hover:bg-white uppercase tracking-widest text-[10px]"
           >
-            Sign In
+            Access Dashboard
           </button>
         </form>
         
         {!isHelper && (
-          <p className="text-center text-sm text-gray-500 mt-8">
+          <p className="text-center text-xs text-label mt-12 italic">
             Don't have an account?{' '}
-            <Link to="/auth/signup" className="font-semibold text-primary hover:text-primary-dark transition-colors">Sign up</Link>
+            <Link to="/auth/signup" className="font-bold text-neon hover:text-text-primary transition-all underline decoration-neon/30 underline-offset-4">Create one</Link>
           </p>
         )}
       </div>
     </div>
+
+
   );
 };
 

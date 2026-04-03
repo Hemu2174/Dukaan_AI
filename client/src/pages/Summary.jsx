@@ -79,52 +79,76 @@ const Summary = () => {
   };
 
   return (
-    <div className="px-3 py-2 h-full pb-24 w-full bg-gray-50">
-      <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">రోజువారీ సారాంశం <br/><span className="text-sm font-normal text-gray-500">(Daily Summary)</span></h1>
+    <div className="min-h-screen w-full bg-dark pb-32">
+      <div className="px-6 py-6 border-b border-border bg-section mb-8">
+        <div className="flex items-center gap-3">
+           <div className="w-2 h-2 bg-neon rounded-full shadow-[0_0_10px_rgba(163,255,18,0.5)]"></div>
+           <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">
+            రోజువారీ సారాంశం <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Daily Analysis)</span>
+          </h1>
+        </div>
+      </div>
       
-      <button 
-        onClick={fetchSummary}
-        disabled={loading}
-        className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-xl shadow-md transition-all active:scale-[0.98] disabled:opacity-50 mb-6 flex items-center justify-center gap-2"
-      >
-        {loading ? 'Generating...' : '✨ ఈరోజు సారాంశం (Generate)'}
-      </button>
+      <div className="px-6">
+        <button 
+          onClick={fetchSummary}
+          disabled={loading}
+          className="w-full bg-neon text-dark font-black py-5 rounded-xl shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 mb-10 flex items-center justify-center gap-3 text-sm uppercase tracking-widest hover:bg-white"
+        >
+          {loading ? (
+            <>
+              <span className="animate-spin text-lg">⚡</span>
+              <span>Quantifying...</span>
+            </>
+          ) : (
+            <>
+              <span>✨</span>
+              <span>Generate Summary</span>
+            </>
+          )}
+        </button>
 
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {error && <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl text-xs mb-8 flex items-center gap-2 italic">⚠️ {error}</div>}
 
-      {summary && (
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 mb-6 relative animate-fade-in-up">
-          <div className="absolute top-4 right-4 flex gap-3">
-            <button onClick={() => window.speechSynthesis.cancel()} className="text-gray-400 hover:text-red-500 transition-colors text-xl" title="Stop">
-              ⏹
-            </button>
-            <button onClick={() => speakTelugu(summary)} className="text-gray-400 hover:text-blue-500 transition-colors text-xl font-medium" title="Play">
-              🔊 వినండి (Listen)
-            </button>
-            <button onClick={copyToClipboard} className="text-gray-400 hover:text-green-500 transition-colors text-xl" title="Copy">
-              📋
-            </button>
+        {summary && (
+          <div className="bg-card p-10 rounded-[2rem] border border-border mb-10 relative animate-fade-in-up shadow-2xl">
+            <div className="absolute top-6 right-6 flex gap-3">
+              <button onClick={() => window.speechSynthesis.cancel()} className="text-label hover:text-red-400 transition-all text-sm p-3 bg-dark rounded-full border border-border" title="Stop">
+                ⏹
+              </button>
+              <button onClick={() => speakTelugu(summary)} className="text-label hover:text-neon transition-all text-sm p-3 bg-dark rounded-full border border-border" title="Play">
+                🔊
+              </button>
+              <button onClick={copyToClipboard} className="text-label hover:text-neon transition-all text-sm p-3 bg-dark rounded-full border border-border" title="Copy">
+                📋
+              </button>
+            </div>
+            <h3 className="font-heading font-medium text-text-primary mb-6 border-b border-border pb-4 text-xl italic">AI Deep Insights</h3>
+            <p className="text-text-primary leading-relaxed text-base mb-2 mt-4 font-sans font-light opacity-90 italic">
+              {summary}
+            </p>
           </div>
-          <h3 className="font-semibold text-gray-800 mb-3 border-b pb-2">AI Summary</h3>
-          <p className="text-gray-700 leading-relaxed text-sm mb-4 mt-2">
-            {summary}
-          </p>
-        </div>
-      )}
+        )}
 
-      {/* Payment Split Cards */}
-      <h3 className="font-semibold text-gray-800 mb-3">పేమెంట్ వివరాలు (Payment Split)</h3>
-      <div className="grid grid-cols-2 gap-2 mb-6 w-full">
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-green-700 mb-1 z-10">Cash Balance</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{metrics.cash_balance}</span>
-        </div>
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-blue-700 mb-1 z-10">UPI Balance</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{metrics.upi_balance}</span>
+        {/* Payment Split Cards */}
+        <h3 className="font-heading font-medium text-text-primary mb-6 text-lg italic flex items-center gap-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-neon"></span>
+          Fiscal Performance
+        </h3>
+        <div className="grid grid-cols-2 gap-4 mb-12 w-full">
+          <div className="bg-card rounded-xl p-6 border border-border flex flex-col items-center justify-center relative overflow-hidden group hover:border-neon/20 transition-all shadow-sm">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-label mb-3 z-10">Cash Holding</span>
+            <span className="text-2xl font-heading font-bold text-money-pos z-10 italic">₹{metrics.cash_balance}</span>
+          </div>
+          <div className="bg-card rounded-xl p-6 border border-border flex flex-col items-center justify-center relative overflow-hidden group hover:border-neon/20 transition-all shadow-sm">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-label mb-3 z-10">Digital Reserve</span>
+            <span className="text-2xl font-heading font-bold text-money-pos z-10 italic">₹{metrics.upi_balance}</span>
+          </div>
         </div>
       </div>
     </div>
+
+
   );
 };
 

@@ -2,13 +2,55 @@
 @import "./styles/fonts.css";
 @import "./styles/theme.css";
 
+:root {
+  --bg-main: #FFFFFF;
+  --bg-section: #F7F7F7;
+  --bg-card: #FFFFFF;
+  --border: #E5E5E5;
+  --text-primary: #0B0B0B;
+  --text-secondary: #6F6F6F;
+  --label: #9CA3AF;
+  --accent: #84cc16;
+  --money-pos: #16a34a;
+  --money-neg: #dc2626;
+}
+
+.dark {
+  --bg-main: #0B0B0B;
+  --bg-section: #0F0F0F;
+  --bg-card: #161616;
+  --border: #262626;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1A1;
+  --label: #6F6F6F;
+  --accent: #A3FF12;
+  --money-pos: #22FF88;
+  --money-neg: #FF5C5C;
+}
+
 @theme {
-  --color-primary: #3b82f6;
-  --color-primary-dark: #2563eb;
-  --color-dark: #0B0B0B;
-  --color-neon: #A3FF12;
+  --color-dark: var(--bg-main);
+  --color-section: var(--bg-section);
+  --color-card: var(--bg-card);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-neon: var(--accent);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-label: var(--label);
+  --color-money-pos: var(--money-pos);
+  --color-money-neg: var(--money-neg);
   --font-heading: 'Instrument Serif', serif;
   --font-body: 'Inter', sans-serif;
+}
+
+.hero-video-bg {
+  filter: brightness(1) contrast(1);
+  transition: filter 0.3s ease;
+}
+
+.dark .hero-video-bg {
+  filter: brightness(0.4) contrast(1.2);
 }
 
 html, body, #root {
@@ -17,10 +59,16 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
 }
 
 body {
   font-family: var(--font-body);
+}
+
+h1, h2, h3, .heading-font {
+  font-family: var(--font-heading);
 }
 
 .full-screen-app {
@@ -28,6 +76,7 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafb;
+  background-color: var(--bg-main);
 }
+
 
