@@ -56,21 +56,20 @@ async function parseTextWithAI(rawText) {
   }
 }
 
-async function generateSummary({ income, expenses, net, cash, upi, udhari, categories_summary }) {
+async function generateSummary({ total_income, total_expense, cash_balance, upi_balance, categories_summary }) {
   try {
     const prompt = `
     You are a friendly business assistant for a Kirana store in India speaking in clear, natural Telugu script.
     Write a 80 to 120 word paragraph explaining today's business.
-    You MUST include these EXACT numbers (DO NOT calculate yourself, DO NOT deviate from these numbers):
-    Income: ₹${income}
-    Expenses: ₹${expenses}
-    Net Profit/Loss: ₹${net}
-    Cash: ₹${cash}
-    UPI: ₹${upi}
-    Udhari (Credit): ₹${udhari}
-    Top Categories: ${categories_summary}
+    
+    Explain:
+    - Total income today: ₹${total_income}
+    - Total expenses (Spent): ₹${total_expense}
+    - Cash balance: ₹${cash_balance}
+    - UPI balance: ₹${upi_balance}
+    - Top Categories: ${categories_summary}
 
-    Mention the payment split clearly. Write flowing, encouraging sentences. Do NOT use bullet points, just one solid paragraph. Do NOT output markdown or English translations, ONLY the Telugu text.
+    Use simple language for shopkeepers. Mention the payment split clearly. Write flowing, encouraging sentences. Do NOT use bullet points, just one solid paragraph. Do NOT output markdown or English translations, ONLY the Telugu text.
     `;
 
     const response = await axios.post(

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 const Summary = () => {
   const [summary, setSummary] = useState(localStorage.getItem("lastSummary") || "");
   const [metrics, setMetrics] = useState({ 
-    cash: 0, upi: 0, udhari: 0, income: 0, expenses: 0, net: 0
+    cash_balance: 0, upi_balance: 0, income: 0, expenses: 0, net: 0
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -114,18 +114,14 @@ const Summary = () => {
 
       {/* Payment Split Cards */}
       <h3 className="font-semibold text-gray-800 mb-3">పేమెంట్ వివరాలు (Payment Split)</h3>
-      <div className="grid grid-cols-3 gap-2 mb-6 w-full">
+      <div className="grid grid-cols-2 gap-2 mb-6 w-full">
         <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-green-700 mb-1 z-10">Cash</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{metrics.cash}</span>
+          <span className="text-xs font-semibold text-green-700 mb-1 z-10">Cash Balance</span>
+          <span className="text-sm font-bold text-gray-900 z-10">₹{metrics.cash_balance}</span>
         </div>
         <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-blue-700 mb-1 z-10">UPI</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{metrics.upi}</span>
-        </div>
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-orange-700 mb-1 z-10">Udhari</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{metrics.udhari}</span>
+          <span className="text-xs font-semibold text-blue-700 mb-1 z-10">UPI Balance</span>
+          <span className="text-sm font-bold text-gray-900 z-10">₹{metrics.upi_balance}</span>
         </div>
       </div>
     </div>

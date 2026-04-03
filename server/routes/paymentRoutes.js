@@ -22,25 +22,46 @@ router.get('/split', async (req, res) => {
 
     if (error) throw error;
 
-    const split = {
-      cash: 0,
-      upi: 0,
-      udhari: 0
-    };
+    let cashIncome = 0;
+    let cashExpense = 0;
+    let upiIncome = 0;
+    let upiExpense = 0;
+    let udhariIncome = 0;
 
     data.forEach(t => {
-      // If it's an expense, depending on business logic you might subtract. 
-      // But usually 'payment split' means collection split (income).
-      // Assuming we just accumulate income:
-      if (t.type === 'income') {
-        const method = t.payment_method?.toLowerCase();
-        if (split[method] !== undefined) {
-          split[method] += Number(t.amount) || 0;
-        }
+      const amt = Number(t.amount) || 0;
+      const method = t.payment_method?.toLowerCase();
+
+      if (method === 'cash') {
+        if (t.type === 'income') cashIncome += amt;
+        else cashExpense += amt;
+      } else if (method === 'upi') {
+        if (t.type === 'income') upiIncome += amt;
+        else upiExpense += amt;
+      } else if (method === 'udhari') {
+        if (t.type === 'income') udhariIncome += amt;
       }
     });
 
-    res.json(split);
+    const response = {
+      cash: {
+        income: cashIncome,
+        expense: cashExpense,
+        net: cashIncome - cashExpense
+      },
+      upi: {
+        income: upiIncome,
+        expense: upiExpense,
+        net: upiIncome - upiExpense
+      },
+      udhari: udhariIncome,
+      totals: {
+        income: cashIncome + upiIncome + udhariIncome,
+        expense: cashExpense + upiExpense
+      }
+    };
+
+    res.json(response);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

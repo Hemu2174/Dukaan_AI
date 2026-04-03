@@ -26,7 +26,12 @@ const TransactionCard = ({ t }) => {
 
 const Dashboard = () => {
   const [transactions, setTransactions] = useState([]);
-  const [splits, setSplits] = useState({ cash: 0, upi: 0, udhari: 0 });
+  const [splits, setSplits] = useState({ 
+    cash: { income: 0, expense: 0, net: 0 }, 
+    upi: { income: 0, expense: 0, net: 0 }, 
+    udhari: 0,
+    totals: { income: 0, expense: 0 }
+  });
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -75,17 +80,30 @@ const Dashboard = () => {
       
       {/* Payment Split Dashboard */}
       <div className="grid grid-cols-3 gap-2 mb-6 w-full">
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-green-700 mb-1 z-10">Cash</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{splits.cash}</span>
+        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+          <span className="text-[10px] uppercase font-bold text-green-700 mb-1 z-10">Cash</span>
+          <div className="flex flex-col items-center z-10">
+            <span className="text-[10px] text-green-600 font-bold">+{splits.cash.income}</span>
+            <span className="text-[10px] text-red-500 font-bold">-{splits.cash.expense}</span>
+            <div className="h-[1px] w-8 bg-gray-100 my-0.5"></div>
+            <span className="text-sm font-bold text-gray-900">₹{splits.cash.net}</span>
+          </div>
         </div>
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-blue-700 mb-1 z-10">UPI</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{splits.upi}</span>
+        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+          <span className="text-[10px] uppercase font-bold text-blue-700 mb-1 z-10">UPI</span>
+          <div className="flex flex-col items-center z-10">
+            <span className="text-[10px] text-green-600 font-bold">+{splits.upi.income}</span>
+            <span className="text-[10px] text-red-500 font-bold">-{splits.upi.expense}</span>
+            <div className="h-[1px] w-8 bg-gray-100 my-0.5"></div>
+            <span className="text-sm font-bold text-gray-900">₹{splits.upi.net}</span>
+          </div>
         </div>
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
-          <span className="text-xs font-semibold text-orange-700 mb-1 z-10">Udhari</span>
-          <span className="text-sm font-bold text-gray-900 z-10">₹{splits.udhari}</span>
+        <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+          <span className="text-[10px] uppercase font-bold text-orange-700 mb-1 z-10">Udhari</span>
+          <div className="flex flex-col items-center justify-center h-full z-10">
+            <span className="text-sm font-bold text-gray-900">₹{splits.udhari}</span>
+            <span className="text-[10px] text-gray-400 mt-1">Pending</span>
+          </div>
         </div>
       </div>
 

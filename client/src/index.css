@@ -1,11 +1,14 @@
 @import "tailwindcss";
+@import "./styles/fonts.css";
+@import "./styles/theme.css";
 
 @theme {
   --color-primary: #3b82f6;
   --color-primary-dark: #2563eb;
-  --color-dark: #1f2937;
-  --color-light: #f3f4f6;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-dark: #0B0B0B;
+  --color-neon: #A3FF12;
+  --font-heading: 'Instrument Serif', serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 html, body, #root {
@@ -17,7 +20,7 @@ html, body, #root {
 }
 
 body {
-  @apply bg-light text-dark font-sans antialiased;
+  font-family: var(--font-body);
 }
 
 .full-screen-app {
@@ -27,3 +30,4 @@ body {
   flex-direction: column;
   background-color: #f9fafb;
 }
+
