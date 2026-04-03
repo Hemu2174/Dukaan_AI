@@ -1,0 +1,66 @@
+# =========================
+# NODE MODULES
+# =========================
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# =========================
+# BUILD FILES
+# =========================
+dist/
+build/
+client/dist/
+server/dist/
+
+# =========================
+# ENV FILES (IMPORTANT)
+# =========================
+.env
+.env.*
+client/.env
+server/.env
+
+# =========================
+# LOG FILES
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# VITE CACHE
+# =========================
+.vite/
+
+# =========================
+# TEST / TEMP FILES
+# =========================
+.tmp/
+.temp/
+coverage/
+
+# =========================
+# IDE / EDITOR FILES
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# SUPABASE LOCAL FILES
+# =========================
+.supabase/
+
+# =========================
+# MISC
+# =========================
+*.swp
+*.bak
