@@ -92,9 +92,72 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    // Speak greeting once per session
+    const speakGreeting = () => {
+      if (!window.speechSynthesis) {
+        console.log("Speech Synthesis not available");
+        return;
+      }
+
+      if (sessionStorage.getItem("greeted")) {
+        console.log("Already greeted in this session");
+        return;
+      }
+
+      // Get IST time
+      const istTime = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Kolkata",
+      });
+
+      const hour = new Date(istTime).getHours();
+
+      let message = "";
+
+      if (hour < 12) {
+        message = "శుభోదయం";
+      } else if (hour < 17) {
+        message = "శుభ మధ్యాహ్నం";
+      } else if (hour < 21) {
+        message = "శుభ సాయంత్రం";
+      } else {
+        message = "శుభ రాత్రి";
+      }
+
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = "te-IN";
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+
+      utterance.onstart = () => {
+        console.log("Greeting started:", message);
+        sessionStorage.setItem("greeted", "true");
+      };
+
+      utterance.onerror = (event) => {
+        console.error("Speech error:", event.error);
+      };
+
+      window.speechSynthesis.cancel();
+      
+      // Small delay to ensure voices are loaded
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+        console.log("Greeting spoken:", message);
+      }, 100);
+    };
+
+    // Call greeting with delay
+    const greetingTimer = setTimeout(() => {
+      speakGreeting();
+    }, 500);
+
     fetchDashboard();
     const interval = setInterval(fetchDashboard, 30000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearTimeout(greetingTimer);
+      clearInterval(interval);
+    };
   }, [fetchDashboard]);
 
   const upiTransactions = transactions

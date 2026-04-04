@@ -34,4 +34,12 @@ router.use('/summary', protect, allowRoles('owner', 'demo'), summaryRoutes);
 // API Alerts routes (Owner and Helper)
 router.use('/alerts', protect, allowRoles('owner', 'helper', 'demo'), alertRoutes);
 
+// API Charts routes (Owner and Helper)
+const chartRoutes = require('./chartRoutes');
+router.use('/charts', protect, allowRoles('owner', 'helper', 'demo'), chartRoutes);
+
+// API Reports routes (Owner only)
+const reportsRoutes = require('./reportsRoutes');
+router.use('/reports', protect, allowRoles('owner', 'demo'), reportsRoutes);
+
 module.exports = router;
