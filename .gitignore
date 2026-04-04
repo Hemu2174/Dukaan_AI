@@ -2,24 +2,24 @@
 # NODE MODULES
 # =========================
 node_modules/
-client/node_modules/
-server/node_modules/
+frontend/node_modules/
+backend/node_modules/
 
 # =========================
 # BUILD FILES
 # =========================
 dist/
 build/
-client/dist/
-server/dist/
+frontend/dist/
+backend/dist/
 
 # =========================
 # ENV FILES (IMPORTANT)
 # =========================
 .env
 .env.*
-client/.env
-server/.env
+frontend/.env
+backend/.env
 
 # =========================
 # LOG FILES
