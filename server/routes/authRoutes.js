@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/jwt');
-const { supabase } = require('../utils/supabaseClient');
+const { collections, ObjectId } = require('../utils/mongoClient');
 
 // Owner Signup
 router.post('/signup', async (req, res) => {

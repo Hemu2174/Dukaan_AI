@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../utils/supabaseClient');
+const { collections, ObjectId } = require('../utils/mongoClient');
 const { generateAlert } = require('../services/aiService');
 
 // POST /api/alerts/weekly

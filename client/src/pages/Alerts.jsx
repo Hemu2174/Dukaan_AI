@@ -1,31 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabaseClient';
 
 const Alerts = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Test Supabase Function (Fix as requested)
-  const testInsert = async () => {
-    // Requires a valid user_id or a bypass if RLS allows. 
-    // Since RLS is enabled, we need to pass the real user ID or a valid UUID to avoid syntax errors.
-    const { data, error } = await supabase
-      .from("transactions")
-      .insert([
-        {
-          user_id: "00000000-0000-0000-0000-000000000000", // valid uuid stub
-          amount: 100,
-          type: "income"
-        }
-      ]);
-
-    console.log("Insert Response:", data, error);
-    if (error) {
-      alert("Error: " + error.message);
-    } else {
-      alert("Success! Check Supabase / console.");
-    }
-  };
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -64,7 +41,6 @@ const Alerts = () => {
               సూచనలు <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Alerts)</span>
             </h1>
           </div>
-          <button onClick={testInsert} className="text-[10px] uppercase font-black tracking-widest text-neon/60 hover:text-neon transition-colors px-3 py-1 border border-neon/20 rounded-md">Safety Sync</button>
         </div>
       </div>
       

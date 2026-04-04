@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../utils/supabaseClient');
+const { collections, ObjectId } = require('../utils/mongoClient');
 const { generateReorderAlert } = require('../services/aiService');
 
 // Helper to resolve ownerId
