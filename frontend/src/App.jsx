@@ -13,7 +13,8 @@ import Log from './pages/Log';
 
 function App() {
   return (
-    <Routes>
+    <div className="bg-dark text-text-primary selection:bg-neon selection:text-dark">
+      <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route element={<Layout />}>
         <Route path="home" element={<Home />} />
@@ -46,6 +47,7 @@ function App() {
         } />
       </Route>
     </Routes>
+    </div>
   );
 }
 
