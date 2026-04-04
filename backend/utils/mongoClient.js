@@ -9,9 +9,10 @@ const connectDB = async () => {
   try {
     await client.connect();
     db = client.db('dukaan_ai');
-    console.log('✅ Connected to MongoDB');
+    console.log('✅ MongoDB native client connected');
+    return db;
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
+    console.error('❌ MongoDB native client connection failed:', error.message);
     throw error;
   }
 };
