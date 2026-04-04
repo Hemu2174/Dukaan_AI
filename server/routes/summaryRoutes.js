@@ -3,6 +3,7 @@ const router = express.Router();
 const { collections } = require('../utils/mongoClient');
 const { generateSummary } = require('../services/aiService');
 const { resolveOwnerId } = require('../utils/authHelpers');
+const { getDemoTransactions } = require('../utils/demoTransactions');
 
 // POST /api/summary/daily
 router.post('/daily', async (req, res) => {
@@ -14,12 +15,16 @@ router.post('/daily', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const transactions = await collections.transactions()
+    let transactions = await collections.transactions()
       .find({
         user_id: ownerId,
         created_at: { $gte: today, $lt: tomorrow },
       })
       .toArray();
+
+    if (!transactions || transactions.length < 3) {
+      transactions = getDemoTransactions(ownerId);
+    }
 
     let cashIncome = 0;
     let cashExpense = 0;
@@ -53,13 +58,6 @@ router.post('/daily', async (req, res) => {
 
     const sortedCats = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
     const categories_summary = sortedCats.slice(0, 3).map((c) => `${c[0]} (₹${c[1]})`).join(', ');
-
-    if (transactions.length < 3) {
-      return res.json({
-        summary: 'కొన్ని లావాదేవీలు ఇంకా నమోదు చేయండి (Please log a few more transactions for a full summary).',
-        metrics: { income, expenses, net, cash_balance: cashNet, upi_balance: upiNet },
-      });
-    }
 
     const dataPayload = {
       total_income: income,

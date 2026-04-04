@@ -3,6 +3,7 @@ const router = express.Router();
 const { collections } = require('../utils/mongoClient');
 const { generateSummary } = require('../services/aiService');
 const { resolveOwnerId } = require('../utils/authHelpers');
+const { getDemoTransactions } = require('../utils/demoTransactions');
 
 // GET /api/reports/daily-summary
 router.get('/daily-summary', async (req, res) => {
@@ -14,13 +15,17 @@ router.get('/daily-summary', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const transactions = await collections.transactions()
+    let transactions = await collections.transactions()
       .find({
         user_id: ownerId,
         created_at: { $gte: today, $lt: tomorrow },
       })
       .project({ amount: 1, type: 1, payment_method: 1 })
       .toArray();
+
+    if (!transactions || transactions.length < 3) {
+      transactions = getDemoTransactions(ownerId);
+    }
 
     let income = 0;
     let expense = 0;
@@ -42,18 +47,6 @@ router.get('/daily-summary', async (req, res) => {
     });
 
     const profit = income - expense;
-
-    if (transactions.length < 3) {
-      return res.json({
-        income,
-        expense,
-        profit,
-        cash_total,
-        upi_total,
-        udhari_total,
-        summary_text: 'కొన్ని ట్రాన్సాక్షన్లు నమోదు చేయండి. అప్పుడు పూర్తి సారాంశం వస్తుంది.',
-      });
-    }
 
     const metrics = { income, expense, profit, cash_total, upi_total, udhari_total };
     let summaryText = await generateSummary(metrics);

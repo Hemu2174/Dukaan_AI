@@ -3,6 +3,7 @@ const router = express.Router();
 const { collections } = require('../utils/mongoClient');
 const { parseTextWithAI } = require('../services/aiService');
 const { resolveOwnerId, resolveHelperName } = require('../utils/authHelpers');
+const { getDemoTransactions } = require('../utils/demoTransactions');
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -10,7 +11,10 @@ function escapeRegex(value) {
 
 function toTransactionPayload(doc) {
   const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
+  const normalizedId = _id && typeof _id.toString === 'function'
+    ? _id.toString()
+    : (rest.id || 'demo-tx');
+  return { id: normalizedId, ...rest };
 }
 
 // POST /api/transactions/parse
@@ -87,13 +91,17 @@ router.get('/today', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const data = await collections.transactions()
+    let data = await collections.transactions()
       .find({
         user_id: ownerId,
         created_at: { $gte: today, $lt: tomorrow },
       })
       .sort({ created_at: -1 })
       .toArray();
+
+    if (!data || data.length < 3) {
+      data = getDemoTransactions(ownerId);
+    }
 
     res.json(data.map(toTransactionPayload));
   } catch (error) {
@@ -111,12 +119,16 @@ router.get('/week', async (req, res) => {
     sevenDaysAgo.setDate(today.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    const data = await collections.transactions()
+    let data = await collections.transactions()
       .find({
         user_id: ownerId,
         created_at: { $gte: sevenDaysAgo },
       })
       .toArray();
+
+    if (!data || data.length < 3) {
+      data = getDemoTransactions(ownerId);
+    }
 
     const daysMap = {};
     for (let i = 0; i < 7; i++) {
@@ -127,7 +139,7 @@ router.get('/week', async (req, res) => {
     }
 
     data.forEach((t) => {
-      const localDate = new Date(t.created_at);
+      const localDate = new Date(t.created_at || t.createdAt);
       const key = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
       if (!daysMap[key]) return;
@@ -155,12 +167,16 @@ router.get('/dashboard', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const data = await collections.transactions()
+    let data = await collections.transactions()
       .find({
         user_id: ownerId,
         created_at: { $gte: today, $lt: tomorrow },
       })
       .toArray();
+
+    if (!data || data.length < 3) {
+      data = getDemoTransactions(ownerId);
+    }
 
     let totalSales = 0;
     let totalExpense = 0;

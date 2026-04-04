@@ -3,6 +3,7 @@ const router = express.Router();
 const { collections } = require('../utils/mongoClient');
 const { generateAlert } = require('../services/aiService');
 const { resolveOwnerId } = require('../utils/authHelpers');
+const { getDemoTransactions } = require('../utils/demoTransactions');
 
 // POST /api/alerts/weekly
 router.post('/weekly', async (req, res) => {
@@ -29,12 +30,16 @@ router.post('/weekly', async (req, res) => {
     sevenDaysAgo.setDate(today.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    const transactions = await collections.transactions()
+    let transactions = await collections.transactions()
       .find({
         user_id: ownerId,
         created_at: { $gte: sevenDaysAgo },
       })
       .toArray();
+
+    if (!transactions || transactions.length < 3) {
+      transactions = getDemoTransactions(ownerId);
+    }
 
     const daysMap = {};
     for (let i = 0; i < 7; i++) {
@@ -45,7 +50,7 @@ router.post('/weekly', async (req, res) => {
     }
 
     transactions.forEach((t) => {
-      const localDate = new Date(t.created_at);
+      const localDate = new Date(t.created_at || t.createdAt);
       const key = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
       if (!daysMap[key]) return;
 
@@ -63,7 +68,24 @@ router.post('/weekly', async (req, res) => {
     const weekData = Object.values(daysMap).sort((a, b) => a.date.localeCompare(b.date));
     const activeDays = weekData.filter((d) => d.income > 0 || d.expenses > 0).length;
     if (activeDays < 3) {
-      return res.json({ skip: true, message: 'Not enough days with data to form an anomaly pattern.' });
+      transactions = getDemoTransactions(ownerId);
+      Object.keys(daysMap).forEach((key) => {
+        daysMap[key] = { date: key, income: 0, expenses: 0, net: 0, udhari: 0 };
+      });
+      transactions.forEach((t) => {
+        const localDate = new Date(t.created_at || t.createdAt);
+        const key = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        if (!daysMap[key]) return;
+        const amt = Number(t.amount) || 0;
+        if (t.type === 'income') {
+          daysMap[key].income += amt;
+          if (t.payment_method === 'udhari') {
+            daysMap[key].udhari += amt;
+          }
+        }
+        if (t.type === 'expense') daysMap[key].expenses += amt;
+        daysMap[key].net = daysMap[key].income - daysMap[key].expenses;
+      });
     }
 
     const alertText = await generateAlert(weekData);
