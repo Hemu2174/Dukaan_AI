@@ -25,9 +25,11 @@ const getDB = () => {
 
 const collections = {
   users: () => getDB().collection('users'),
+  helpers: () => getDB().collection('helpers'),
   transactions: () => getDB().collection('transactions'),
   alerts: () => getDB().collection('alerts'),
   products: () => getDB().collection('products'),
+  distributors: () => getDB().collection('distributors'),
 };
 
 module.exports = { connectDB, getDB, collections, ObjectId, client };

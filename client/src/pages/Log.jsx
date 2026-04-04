@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const Log = () => {
   const navigate = useNavigate();
   const [listening, setListening] = useState(false);
-  const [status, setStatus] = useState("Tap to Speak");
+  const [status, setStatus] = useState('Tap to Speak');
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -14,38 +14,37 @@ const Log = () => {
     payment_method: 'cash',
     category: 'General',
     product_name: '',
-    raw_text: ''
+    raw_text: '',
   });
 
   const speechRef = useRef(null);
   const isListeningRef = useRef(false);
 
-  // STEP 1 & 6 — IMPLEMENT SPEECH RECOGNITION
   const startListening = () => {
     if (isListeningRef.current) return;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      console.error("Speech Recognition not supported in this browser");
+      console.error('Speech Recognition not supported in this browser');
       return;
     }
 
     const recognition = new SpeechRecognition();
     speechRef.current = recognition;
-    
-    recognition.lang = "te-IN"; // Telugu
-    recognition.continuous = true;   // IMPORTANT
-    recognition.interimResults = true; // IMPORTANT
+
+    recognition.lang = 'te-IN';
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
       isListeningRef.current = true;
       setListening(true);
-      setStatus("🎤 Listening...");
+      setStatus('🎤 Listening...');
     };
 
     recognition.onresult = (event) => {
-      let transcript = "";
+      let transcript = '';
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
       }
@@ -59,18 +58,18 @@ const Log = () => {
     };
 
     recognition.onerror = (event) => {
-      console.log("Speech error:", event.error);
-      
-      if (event.error === "aborted") return;
-      
-      if (event.error === "no-speech") {
+      console.log('Speech error:', event.error);
+
+      if (event.error === 'aborted') return;
+
+      if (event.error === 'no-speech') {
         setStatus("Didn't catch that, try again");
-      } else if (event.error === "not-allowed") {
-        setStatus("Microphone permission denied");
+      } else if (event.error === 'not-allowed') {
+        setStatus('Microphone permission denied');
       } else {
-        setStatus("Tap to Speak");
+        setStatus('Tap to Speak');
       }
-      
+
       setListening(false);
       isListeningRef.current = false;
     };
@@ -79,15 +78,15 @@ const Log = () => {
       isListeningRef.current = false;
       setListening(false);
       if (!inputText) {
-        setStatus("Tap mic and speak clearly");
+        setStatus('Tap mic and speak clearly');
       }
     };
 
     try {
-        recognition.start();
+      recognition.start();
     } catch (e) {
-        console.error(e);
-        isListeningRef.current = false;
+      console.error(e);
+      isListeningRef.current = false;
     }
   };
 
@@ -96,62 +95,58 @@ const Log = () => {
     await handleAutoTransaction(inputText);
   };
 
-  // STEP 2 — CREATE AI PARSE FUNCTION
   const handleAutoTransaction = async (text) => {
     try {
       setLoading(true);
-      setStatus("🤖 AI Parsing...");
+      setStatus('🤖 AI Parsing...');
 
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
 
-      // 1️⃣ AI PARSE
-      const parseRes = await fetch("/api/transactions/parse", {
-        method: "POST",
+      const parseRes = await fetch('/api/transactions/parse', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ raw_text: text })
+        body: JSON.stringify({ raw_text: text }),
       });
 
       const parsed = await parseRes.json();
       const raw_text = text.toLowerCase();
 
-      // 🧠 STEP 3, 4, 5 — ROBUST FALLBACKS/OVERRIDES
       if (!parsed.amount || parsed.amount === 0) {
         const match = text.match(/\d+/);
         parsed.amount = match ? Number(match[0]) : 0;
       }
 
-      if (raw_text.includes("buy") || raw_text.includes("bought") || raw_text.includes("ఖరీదు")) {
-        parsed.type = "expense";
+      if (raw_text.includes('buy') || raw_text.includes('bought') || raw_text.includes('ఖరీదు')) {
+        parsed.type = 'expense';
       } else {
-        parsed.type = "income";
+        parsed.type = 'income';
       }
 
-      if (raw_text.includes("upi") || raw_text.includes("phonepe") || raw_text.includes("gpay")) {
-        parsed.payment_method = "upi";
-      } else if (raw_text.includes("udhari") || raw_text.includes("credit") || raw_text.includes("ఉధారి")) {
-        parsed.payment_method = "udhari";
-      } else if (raw_text.includes("cash") || raw_text.includes("నగదు")) {
-        parsed.payment_method = "cash";
+      if (raw_text.includes('upi') || raw_text.includes('phonepe') || raw_text.includes('gpay')) {
+        parsed.payment_method = 'upi';
+      } else if (raw_text.includes('udhari') || raw_text.includes('credit') || raw_text.includes('ఉధారి')) {
+        parsed.payment_method = 'udhari';
+      } else if (raw_text.includes('cash') || raw_text.includes('నగదు')) {
+        parsed.payment_method = 'cash';
       }
 
       if (!parsed.payment_method) {
-        parsed.payment_method = "cash";
+        parsed.payment_method = 'cash';
       }
 
       setParsedData({
         ...parsed,
         raw_text: text,
-        product_name: parsed.product_name || ""
+        product_name: parsed.product_name || '',
       });
       setShowConfirm(true);
-      setStatus("Confirm Details");
-
+      setStatus('Confirm Details');
     } catch (err) {
       console.error(err);
-      setStatus("❌ Failed to parse");
+      setStatus('❌ Failed to parse');
     } finally {
       setLoading(false);
     }
@@ -160,159 +155,160 @@ const Log = () => {
   const handleSaveTransaction = async () => {
     try {
       setLoading(true);
-      setStatus("💾 Saving...");
-      const token = localStorage.getItem("token");
+      setStatus('💾 Saving...');
+      const token = localStorage.getItem('token');
 
-      const saveRes = await fetch("/api/transactions", {
-        method: "POST",
+      const saveRes = await fetch('/api/transactions', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(parsedData)
+        body: JSON.stringify(parsedData),
       });
 
-      if (!saveRes.ok) throw new Error("Failed to save");
+      if (!saveRes.ok) throw new Error('Failed to save');
 
-      setStatus("✅ Saved!");
+      setStatus('✅ Saved!');
       setTimeout(() => navigate('/dashboard'), 1000);
     } catch (err) {
       console.error(err);
-      setStatus("❌ Save failed");
+      setStatus('❌ Save failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-dark pb-32">
-      <div className="px-6 py-6 border-b border-border bg-section mb-8">
-        <div className="flex items-center gap-3">
-           <div className="w-2 h-2 bg-neon rounded-full shadow-[0_0_10px_rgba(163,255,18,0.5)]"></div>
-           <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">
-            లావాదేవీ చేర్చు <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Log)</span>
-          </h1>
-        </div>
-      </div>
-      
-      <div className="px-6">
-        {/* Voice Input Section */}
-        <div className="flex flex-col items-center justify-center bg-card w-full py-16 rounded-[2rem] border border-border mb-8 relative overflow-hidden group hover:border-neon/20 transition-all shadow-xl">
-          <div className="absolute inset-0 bg-neon/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          
-          <button 
-            onClick={startListening}
-            disabled={loading}
-            className={`w-36 h-36 rounded-full flex items-center justify-center text-6xl shadow-[0_0_40px_rgba(163,255,18,0.15)] transition-all focus:outline-none z-10 ${listening ? 'bg-red-500 animate-pulse text-text-primary scale-110 shadow-[0_0_50px_rgba(239,68,68,0.4)]' : 'bg-neon text-dark hover:scale-105 active:scale-95'} ${loading ? 'opacity-50' : ''}`}
-          >
-            🎤
-          </button>
-          
-          <p className={`mt-10 text-xl font-heading font-medium tracking-wide transition-colors z-10 ${listening ? 'text-red-400' : 'text-label'}`}>
-            {status}
-          </p>
+    <div className="min-h-screen w-full bg-[#0B0F1A] text-white pb-12">
+      <div className="mx-auto w-full max-w-7xl px-4 pt-4 md:px-6 md:pt-6">
+        <div className="mb-6 rounded-[28px] border border-white/10 bg-white/[0.04] px-5 py-4 shadow-[0_20px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl md:px-6 md:py-5">
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]" />
+            <h1 className="text-2xl font-semibold tracking-tight text-white">
+              లావాదేవీ చేర్చు <span className="ml-2 text-sm font-normal uppercase tracking-[0.28em] text-white/35">(Log)</span>
+            </h1>
+          </div>
         </div>
 
-        {/* Manual Input UI */}
-        <div className="w-full flex gap-3 mt-4 mb-2">
-          <input
-            type="text"
-            placeholder="Rice 500 cash / బియ్యం 500 నగదు"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 bg-card p-4 rounded-xl border border-border outline-none focus:border-neon/50 transition-all text-sm text-text-primary placeholder-label/50 shadow-sm"
-          />
+        <div className="px-0 md:px-0">
+          <div className="relative mb-6 flex w-full flex-col items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-[#111827] py-16 shadow-[0_24px_80px_rgba(0,0,0,0.35)] group hover:border-white/20 transition-all">
+            <div className="absolute inset-0 bg-cyan-300/5 opacity-0 transition-opacity group-hover:opacity-100" />
 
-          <button
-            onClick={handleManualSubmit}
-            disabled={loading}
-            className="bg-neon text-dark px-8 rounded-xl font-bold shadow-xl active:scale-95 transition-all text-sm disabled:opacity-50 hover:bg-white"
-          >
-            {loading ? '...' : 'Parse'}
-          </button>
-        </div>
-
-        {/* Confirmation Form */}
-        {showConfirm && (
-          <div className="w-full bg-card rounded-[2rem] border border-border p-8 mb-24 animate-fade-in-up mt-10 shadow-2xl">
-            <div className="flex justify-between items-center mb-8 border-b border-border pb-6">
-               <h2 className="font-heading font-medium text-text-primary text-xl italic">Verify Details</h2>
-               <span className="bg-neon/10 text-neon text-[10px] uppercase font-black px-3 py-1.5 rounded-full border border-neon/20 tracking-widest">AI Accurate</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 mb-10">
-               <div className="col-span-1 border-b border-border pb-2 focus-within:border-neon transition-colors">
-                 <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-2">Amount (₹)</label>
-                 <input 
-                   type="number" 
-                   value={parsedData.amount}
-                   onChange={(e) => setParsedData({...parsedData, amount: Number(e.target.value)})}
-                   className="w-full text-2xl font-heading font-bold text-money-pos bg-transparent outline-none"
-                 />
-               </div>
-               <div className="col-span-1 border-b border-border pb-2 focus-within:border-neon transition-colors">
-                 <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-2">Flow Type</label>
-                 <select 
-                   value={parsedData.type}
-                   onChange={(e) => setParsedData({...parsedData, type: e.target.value})}
-                   className="w-full text-base font-medium text-text-primary bg-transparent outline-none cursor-pointer"
-                 >
-                   <option value="income" className="bg-card">Income (+)</option>
-                   <option value="expense" className="bg-card">Expense (-)</option>
-                 </select>
-               </div>
-               <div className="col-span-1 border-b border-border pb-2 focus-within:border-neon transition-colors">
-                 <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-2">Mode</label>
-                 <select 
-                   value={parsedData.payment_method}
-                   onChange={(e) => setParsedData({...parsedData, payment_method: e.target.value})}
-                   className="w-full text-sm font-medium text-text-primary bg-transparent outline-none cursor-pointer"
-                 >
-                   <option value="cash" className="bg-card">Cash (నగదు)</option>
-                   <option value="upi" className="bg-card">Digital UPI</option>
-                   <option value="udhari" className="bg-card">Udhari (ఉధారి)</option>
-                 </select>
-               </div>
-               <div className="col-span-1 border-b border-border pb-2 focus-within:border-neon transition-colors">
-                 <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-2">Tag</label>
-                 <input 
-                   type="text" 
-                   value={parsedData.category}
-                   onChange={(e) => setParsedData({...parsedData, category: e.target.value})}
-                   className="w-full text-sm font-medium text-text-primary bg-transparent outline-none"
-                 />
-               </div>
-            </div>
-
-            <div className="mb-12 border-b border-border pb-2 focus-within:border-neon transition-colors">
-               <label className="block text-[10px] uppercase tracking-widest font-black text-label mb-2">Identify Product</label>
-               <input 
-                 type="text" 
-                 placeholder="Auto-Reorder Name"
-                 value={parsedData.product_name}
-                 onChange={(e) => setParsedData({...parsedData, product_name: e.target.value})}
-                 className="w-full text-sm font-medium text-text-primary bg-transparent outline-none placeholder-label/30"
-               />
-            </div>
-
-            <button 
-              onClick={handleSaveTransaction}
+            <button
+              onClick={startListening}
               disabled={loading}
-              className="w-full bg-white text-dark font-black py-5 rounded-xl shadow-2xl transition-all active:scale-95 disabled:opacity-50 hover:bg-neon uppercase tracking-widest text-xs"
+              className={`z-10 flex h-36 w-36 items-center justify-center rounded-full text-6xl shadow-[0_0_40px_rgba(103,232,249,0.15)] transition-all focus:outline-none ${listening ? 'scale-110 animate-pulse bg-rose-500 text-white shadow-[0_0_50px_rgba(244,63,94,0.4)]' : 'bg-cyan-300 text-[#0B0F1A] hover:scale-105 active:scale-95'} ${loading ? 'opacity-50' : ''}`}
             >
-              Commit to Ledger
+              🎤
+            </button>
+
+            <p className={`z-10 mt-10 text-xl font-semibold tracking-wide transition-colors ${listening ? 'text-rose-300' : 'text-white/45'}`}>
+              {status}
+            </p>
+          </div>
+
+          <div className="mt-4 mb-2 flex w-full gap-3">
+            <input
+              type="text"
+              placeholder="Rice 500 cash / బియ్యం 500 నగదు"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="flex-1 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white placeholder:text-white/30 outline-none transition-all focus:border-cyan-300/40 focus:bg-white/[0.06]"
+            />
+
+            <button
+              onClick={handleManualSubmit}
+              disabled={loading}
+              className="rounded-2xl bg-white px-8 text-sm font-semibold text-[#0B0F1A] shadow-xl transition-all active:scale-95 disabled:opacity-50 hover:bg-cyan-100"
+            >
+              {loading ? '...' : 'Parse'}
             </button>
           </div>
-        )}
-      </div>
 
-      {inputText && !showConfirm && (
-        <div className="px-6 mt-auto mb-24">
-          <div className="bg-card p-6 rounded-2xl border border-dashed border-border text-center shadow-inner">
-             <p className="text-text-primary italic font-medium opacity-60">"{inputText}"</p>
-          </div>
+          {showConfirm && (
+            <div className="mt-10 mb-24 w-full rounded-[28px] border border-white/10 bg-[#111827] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] animate-fade-in-up">
+              <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-6">
+                <h2 className="text-xl font-semibold text-white">Verify Details</h2>
+                <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.26em] text-cyan-200">AI Accurate</span>
+              </div>
+
+              <div className="mb-10 grid grid-cols-2 gap-8">
+                <div className="col-span-1 border-b border-white/10 pb-2 transition-colors focus-within:border-cyan-300/40">
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.26em] text-white/35">Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={parsedData.amount}
+                    onChange={(e) => setParsedData({ ...parsedData, amount: Number(e.target.value) })}
+                    className="w-full bg-transparent text-2xl font-semibold text-emerald-300 outline-none"
+                  />
+                </div>
+                <div className="col-span-1 border-b border-white/10 pb-2 transition-colors focus-within:border-cyan-300/40">
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.26em] text-white/35">Flow Type</label>
+                  <select
+                    value={parsedData.type}
+                    onChange={(e) => setParsedData({ ...parsedData, type: e.target.value })}
+                    className="w-full cursor-pointer bg-transparent text-base font-medium text-white outline-none"
+                  >
+                    <option value="income" className="bg-[#111827]">Income (+)</option>
+                    <option value="expense" className="bg-[#111827]">Expense (-)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-10 grid grid-cols-2 gap-8">
+                <div className="col-span-1 border-b border-white/10 pb-2 transition-colors focus-within:border-cyan-300/40">
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.26em] text-white/35">Payment Method</label>
+                  <select
+                    value={parsedData.payment_method}
+                    onChange={(e) => setParsedData({ ...parsedData, payment_method: e.target.value })}
+                    className="w-full cursor-pointer bg-transparent text-base font-medium text-white outline-none"
+                  >
+                    <option value="cash" className="bg-[#111827]">Cash</option>
+                    <option value="upi" className="bg-[#111827]">UPI</option>
+                    <option value="udhari" className="bg-[#111827]">Udhari</option>
+                  </select>
+                </div>
+                <div className="col-span-1 border-b border-white/10 pb-2 transition-colors focus-within:border-cyan-300/40">
+                  <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.26em] text-white/35">Category</label>
+                  <input
+                    type="text"
+                    value={parsedData.category}
+                    onChange={(e) => setParsedData({ ...parsedData, category: e.target.value })}
+                    className="w-full bg-transparent text-base font-medium text-white outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-10 border-b border-white/10 pb-6 transition-colors focus-within:border-cyan-300/40">
+                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.26em] text-white/35">Product Name</label>
+                <input
+                  type="text"
+                  value={parsedData.product_name}
+                  onChange={(e) => setParsedData({ ...parsedData, product_name: e.target.value })}
+                  className="w-full bg-transparent text-base font-medium text-white outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={handleSaveTransaction}
+                  disabled={loading}
+                  className="rounded-2xl bg-white py-5 text-[10px] font-black uppercase tracking-[0.28em] text-[#0B0F1A] shadow-xl transition-all active:scale-[0.98] hover:bg-cyan-100 disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] py-5 text-[10px] font-black uppercase tracking-[0.28em] text-white/65 shadow-xl transition-all active:scale-[0.98] hover:border-white/20 hover:bg-white/[0.08]"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

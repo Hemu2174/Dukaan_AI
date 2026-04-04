@@ -29,7 +29,3 @@ connectDB().then(() => {
   console.error('❌ Failed to start server:', err);
   process.exit(1);
 });
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});

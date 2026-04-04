@@ -1,33 +1,47 @@
 const express = require('express');
 const router = express.Router();
-const { collections, ObjectId } = require('../utils/mongoClient');
+const { collections } = require('../utils/mongoClient');
 const { generateReorderAlert } = require('../services/aiService');
+const { resolveOwnerId, toObjectId } = require('../utils/authHelpers');
 
-// Helper to resolve ownerId
-async function resolveOwnerId(req) {
-  let ownerId = req.user.user_id;
-  if (req.user.role === 'helper') {
-    const { data: helper } = await supabase
-      .from('helpers')
-      .select('owner_user_id')
-      .eq('id', req.user.user_id)
-      .single();
-    if (helper) ownerId = helper.owner_user_id;
+function serializeProduct(doc, distributorDoc) {
+  const { _id, distributor_id, ...rest } = doc;
+  const payload = { id: _id.toString(), distributor_id, ...rest };
+
+  if (distributorDoc) {
+    payload.distributors = {
+      id: distributorDoc._id.toString(),
+      distributor_name: distributorDoc.distributor_name,
+      mobile_number: distributorDoc.mobile_number || distributorDoc.phone || null,
+    };
   }
-  return ownerId;
+
+  return payload;
+}
+
+async function resolveDistributor(product) {
+  if (!product.distributor_id) return null;
+
+  const distributorObjectId = toObjectId(product.distributor_id);
+  if (distributorObjectId) {
+    return collections.distributors().findOne({ _id: distributorObjectId });
+  }
+
+  return collections.distributors().findOne({ id: product.distributor_id });
 }
 
 // GET /api/products
 router.get('/', async (req, res) => {
   try {
     const ownerId = await resolveOwnerId(req);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, distributors(distributor_name, mobile_number)')
-      .eq('user_id', ownerId);
+    const products = await collections.products().find({ user_id: ownerId }).toArray();
 
-    if (error) throw error;
-    res.json(data);
+    const serialized = [];
+    for (const product of products) {
+      serialized.push(serializeProduct(product, await resolveDistributor(product)));
+    }
+
+    res.json(serialized);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -44,21 +58,18 @@ router.post('/', async (req, res) => {
     const payload = {
       user_id: ownerId,
       product_name,
-      current_stock: current_stock || 0,
+      current_stock: Number(current_stock) || 0,
       unit: unit || 'packets',
-      avg_daily_sales: avg_daily_sales || 0, // Fallback if dynamically calculating later
-      reorder_threshold_days: reorder_threshold_days || 2,
+      avg_daily_sales: Number(avg_daily_sales) || 0,
+      reorder_threshold_days: Number(reorder_threshold_days) || 2,
+      created_at: new Date(),
+      updated_at: new Date(),
     };
 
     if (distributor_id) payload.distributor_id = distributor_id;
 
-    const { data, error } = await supabase
-      .from('products')
-      .insert(payload)
-      .select();
-
-    if (error) throw error;
-    res.json(data[0]);
+    const result = await collections.products().insertOne(payload);
+    res.json({ id: result.insertedId.toString(), ...payload });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -69,61 +80,44 @@ router.get('/reorder-alerts', async (req, res) => {
   try {
     const ownerId = await resolveOwnerId(req);
 
-    // 1. Fetch products and left join distributors
-    const { data: products, error } = await supabase
-      .from('products')
-      .select('*, distributors(id, distributor_name, mobile_number)')
-      .eq('user_id', ownerId);
-
-    if (error) {
-        // Fallback for demo if products table doesn't exist
-        console.error(error);
-        return res.json([]);
-    }
-
+    const products = await collections.products().find({ user_id: ownerId }).toArray();
     const alerts = [];
 
-    // 2. Iterate and evaluate stock
-    for (const p of products) {
-        // Core formula: days_remaining = current_stock / avg_daily_sales
-        const avg = Number(p.avg_daily_sales) || 0;
-        const stock = Number(p.current_stock) || 0;
-        const threshold = Number(p.reorder_threshold_days) || 2;
+    for (const product of products) {
+      const distributor = await resolveDistributor(product);
+      const avg = Number(product.avg_daily_sales) || 0;
+      const stock = Number(product.current_stock) || 0;
+      const threshold = Number(product.reorder_threshold_days) || 2;
 
-        if (avg > 0) {
-            const daysRemaining = Math.floor(stock / avg);
-
-            // Trigger conditional push logic
-            if (daysRemaining <= threshold) {
-                // Generate groq telugu alert message
-                const teluguAlert = await generateReorderAlert(p.product_name, daysRemaining);
-
-                alerts.push({
-                    id: p.id,
-                    product_name: p.product_name,
-                    days_remaining: daysRemaining,
-                    distributor_name: p.distributors ? p.distributors.distributor_name : 'No Distributor Assigned',
-                    phone: p.distributors ? p.distributors.mobile_number : null,
-                    alert_message: teluguAlert
-                });
-            }
-        } else if (stock <= 0) {
-            // Out of stock explicitly, regardless of avg
-            const teluguAlert = await generateReorderAlert(p.product_name, 0);
-            alerts.push({
-                id: p.id,
-                product_name: p.product_name,
-                days_remaining: 0,
-                distributor_name: p.distributors ? p.distributors.distributor_name : 'No Distributor',
-                phone: p.distributors ? p.distributors.mobile_number : null,
-                alert_message: teluguAlert
-            });
+      if (avg > 0) {
+        const daysRemaining = Math.floor(stock / avg);
+        if (daysRemaining <= threshold) {
+          const teluguAlert = await generateReorderAlert(product.product_name, daysRemaining);
+          alerts.push({
+            id: product._id.toString(),
+            product_name: product.product_name,
+            days_remaining: daysRemaining,
+            distributor_name: distributor ? distributor.distributor_name : 'No Distributor Assigned',
+            phone: distributor ? (distributor.mobile_number || distributor.phone || null) : null,
+            alert_message: teluguAlert,
+          });
         }
+      } else if (stock <= 0) {
+        const teluguAlert = await generateReorderAlert(product.product_name, 0);
+        alerts.push({
+          id: product._id.toString(),
+          product_name: product.product_name,
+          days_remaining: 0,
+          distributor_name: distributor ? distributor.distributor_name : 'No Distributor',
+          phone: distributor ? (distributor.mobile_number || distributor.phone || null) : null,
+          alert_message: teluguAlert,
+        });
+      }
     }
 
     res.json(alerts);
   } catch (err) {
-    console.error("Reorder alert err:", err);
+    console.error('Reorder alert err:', err);
     res.status(500).json({ error: err.message });
   }
 });

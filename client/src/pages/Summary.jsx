@@ -79,21 +79,23 @@ const Summary = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-dark pb-32">
-      <div className="px-6 py-6 border-b border-border bg-section mb-8">
-        <div className="flex items-center gap-3">
-           <div className="w-2 h-2 bg-neon rounded-full shadow-[0_0_10px_rgba(163,255,18,0.5)]"></div>
-           <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">
-            రోజువారీ సారాంశం <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Daily Analysis)</span>
-          </h1>
+    <div className="min-h-screen w-full bg-[#0B0F1A] text-white pb-12">
+      <div className="mx-auto w-full max-w-7xl px-4 pt-4 md:px-6 md:pt-6">
+        <div className="mb-6 rounded-[28px] border border-white/10 bg-white/[0.04] px-5 py-4 shadow-[0_20px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl md:px-6 md:py-5">
+          <div className="flex items-center gap-3">
+             <div className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.45)]" />
+             <h1 className="text-2xl font-semibold tracking-tight text-white">
+              రోజువారీ సారాంశం <span className="ml-2 text-sm font-normal uppercase tracking-[0.28em] text-white/35">(Daily Analysis)</span>
+            </h1>
+          </div>
         </div>
       </div>
       
-      <div className="px-6">
+      <div className="px-4 md:px-6">
         <button 
           onClick={fetchSummary}
           disabled={loading}
-          className="w-full bg-neon text-dark font-black py-5 rounded-xl shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 mb-10 flex items-center justify-center gap-3 text-sm uppercase tracking-widest hover:bg-white"
+          className="mb-10 flex w-full items-center justify-center gap-3 rounded-2xl bg-white py-5 text-sm font-semibold uppercase tracking-[0.28em] text-[#0B0F1A] shadow-xl transition-all active:scale-[0.98] hover:bg-cyan-100 disabled:opacity-50"
         >
           {loading ? (
             <>
@@ -108,41 +110,41 @@ const Summary = () => {
           )}
         </button>
 
-        {error && <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl text-xs mb-8 flex items-center gap-2 italic">⚠️ {error}</div>}
+        {error && <div className="mb-8 flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-300">⚠️ {error}</div>}
 
         {summary && (
-          <div className="bg-card p-10 rounded-[2rem] border border-border mb-10 relative animate-fade-in-up shadow-2xl">
+          <div className="relative mb-10 rounded-[28px] border border-white/10 bg-[#111827] p-10 shadow-[0_24px_80px_rgba(0,0,0,0.35)] animate-fade-in-up">
             <div className="absolute top-6 right-6 flex gap-3">
-              <button onClick={() => window.speechSynthesis.cancel()} className="text-label hover:text-red-400 transition-all text-sm p-3 bg-dark rounded-full border border-border" title="Stop">
+              <button onClick={() => window.speechSynthesis.cancel()} className="rounded-full border border-white/10 bg-white/[0.04] p-3 text-sm text-white/60 transition-all hover:text-rose-300" title="Stop">
                 ⏹
               </button>
-              <button onClick={() => speakTelugu(summary)} className="text-label hover:text-neon transition-all text-sm p-3 bg-dark rounded-full border border-border" title="Play">
+              <button onClick={() => speakTelugu(summary)} className="rounded-full border border-white/10 bg-white/[0.04] p-3 text-sm text-white/60 transition-all hover:text-white" title="Play">
                 🔊
               </button>
-              <button onClick={copyToClipboard} className="text-label hover:text-neon transition-all text-sm p-3 bg-dark rounded-full border border-border" title="Copy">
+              <button onClick={copyToClipboard} className="rounded-full border border-white/10 bg-white/[0.04] p-3 text-sm text-white/60 transition-all hover:text-white" title="Copy">
                 📋
               </button>
             </div>
-            <h3 className="font-heading font-medium text-text-primary mb-6 border-b border-border pb-4 text-xl italic">AI Deep Insights</h3>
-            <p className="text-text-primary leading-relaxed text-base mb-2 mt-4 font-sans font-light opacity-90 italic">
+            <h3 className="mb-6 border-b border-white/10 pb-4 text-xl font-semibold text-white">AI Deep Insights</h3>
+            <p className="mb-2 mt-4 text-base leading-relaxed text-white/80">
               {summary}
             </p>
           </div>
         )}
 
         {/* Payment Split Cards */}
-        <h3 className="font-heading font-medium text-text-primary mb-6 text-lg italic flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-neon"></span>
+        <h3 className="mb-6 flex items-center gap-3 text-lg font-semibold text-white">
+          <span className="h-1.5 w-1.5 rounded-full bg-cyan-300"></span>
           Fiscal Performance
         </h3>
-        <div className="grid grid-cols-2 gap-4 mb-12 w-full">
-          <div className="bg-card rounded-xl p-6 border border-border flex flex-col items-center justify-center relative overflow-hidden group hover:border-neon/20 transition-all shadow-sm">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-label mb-3 z-10">Cash Holding</span>
-            <span className="text-2xl font-heading font-bold text-money-pos z-10 italic">₹{metrics.cash_balance}</span>
+        <div className="mb-12 grid w-full grid-cols-2 gap-4">
+          <div className="group relative flex flex-col items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-[#111827] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)] transition-all hover:border-white/20">
+            <span className="z-10 mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-white/35">Cash Holding</span>
+            <span className="z-10 text-2xl font-semibold text-emerald-300">₹{metrics.cash_balance}</span>
           </div>
-          <div className="bg-card rounded-xl p-6 border border-border flex flex-col items-center justify-center relative overflow-hidden group hover:border-neon/20 transition-all shadow-sm">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-label mb-3 z-10">Digital Reserve</span>
-            <span className="text-2xl font-heading font-bold text-money-pos z-10 italic">₹{metrics.upi_balance}</span>
+          <div className="group relative flex flex-col items-center justify-center overflow-hidden rounded-[24px] border border-white/10 bg-[#111827] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)] transition-all hover:border-white/20">
+            <span className="z-10 mb-3 text-[10px] font-black uppercase tracking-[0.28em] text-white/35">Digital Reserve</span>
+            <span className="z-10 text-2xl font-semibold text-emerald-300">₹{metrics.upi_balance}</span>
           </div>
         </div>
       </div>
