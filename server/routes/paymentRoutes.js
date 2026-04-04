@@ -1,26 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const { collections, ObjectId } = require('../utils/mongoClient');
+const Transaction = require('../models/Transaction');
 
 // GET /api/payments/split
 router.get('/split', async (req, res) => {
   try {
-    let ownerId = req.user.user_id;
+    let user_id = req.user.id;
+
+    if (req.user.role === 'helper') {
+      user_id = req.user.owner_id;
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('amount, payment_method, type')
-      .eq('user_id', ownerId)
-      // typically we only want income split, or absolute total. We'll map absolute transactions
-      .gte('created_at', today.toISOString())
-      .lt('created_at', tomorrow.toISOString());
-
-    if (error) throw error;
+    const transactions = await Transaction.find({
+      user_id,
+      created_at: { $gte: today, $lt: tomorrow }
+    });
 
     let cashIncome = 0;
     let cashExpense = 0;
@@ -28,7 +27,7 @@ router.get('/split', async (req, res) => {
     let upiExpense = 0;
     let udhariIncome = 0;
 
-    data.forEach(t => {
+    transactions.forEach(t => {
       const amt = Number(t.amount) || 0;
       const method = t.payment_method?.toLowerCase();
 
@@ -63,6 +62,7 @@ router.get('/split', async (req, res) => {
 
     res.json(response);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 });

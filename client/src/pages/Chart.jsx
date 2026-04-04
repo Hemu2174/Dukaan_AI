@@ -1,142 +1,282 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-
-const daysTelugu = ["ఆది", "సోమ", "మంగళ", "బుధ", "గురు", "శుక్ర", "శని"];
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from 'recharts';
+import { getWeeklyChartData } from '../services/chartApi';
+import Layout from '../components/Layout';
 
 const Chart = () => {
-  const [data, setData] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [totals, setTotals] = useState({
+    totalIncome: 0,
+    totalExpense: 0,
+    totalProfit: 0
+  });
 
   useEffect(() => {
-    const fetchWeekData = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/api/transactions/week', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        const json = await res.json();
-        if (res.ok) {
-          // Format data for chart
-          const formatted = json.map(d => {
-            const dateObj = new Date(d.date);
-            return {
-              ...d,
-              dayLabel: daysTelugu[dateObj.getDay()]
-            };
-          });
-          setData(formatted);
-        } else {
-          setError(json.error);
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to fetch week data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchWeekData();
+    fetchChartData();
   }, []);
 
-  if (loading) return <div className="p-10 text-center text-label animate-pulse font-heading lowercase tracking-widest italic h-screen bg-dark w-full">Analyzing week...</div>;
-  if (error) return <div className="p-10 text-center text-money-neg bg-money-neg/10 m-6 rounded-xl border border-money-neg/20">{error}</div>;
+  const fetchChartData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getWeeklyChartData();
 
-  const daysWithData = data.filter(d => d.income > 0 || d.expenses > 0).length;
-  
-  if (daysWithData < 3) {
+      if (!data || data.length === 0) {
+        setChartData([]);
+        setTotals({
+          totalIncome: 0,
+          totalExpense: 0,
+          totalProfit: 0
+        });
+        return;
+      }
+
+      // Calculate totals
+      const totalsData = data.reduce(
+        (acc, day) => ({
+          totalIncome: acc.totalIncome + (day.income || 0),
+          totalExpense: acc.totalExpense + (day.expense || 0),
+          totalProfit: acc.totalProfit + (day.profit || 0)
+        }),
+        { totalIncome: 0, totalExpense: 0, totalProfit: 0 }
+      );
+
+      setChartData(data);
+      setTotals(totalsData);
+    } catch (err) {
+      console.error('Error fetching chart data:', err);
+      setError('Failed to load chart data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTrendInsight = () => {
+    if (chartData.length === 0) return null;
+
+    if (totals.totalProfit > 0) {
+      return '✅ This week ended in profit';
+    } else if (totals.totalProfit < 0) {
+      return '⚠️ This week ended in loss';
+    }
+
+    const highExpenseDays = chartData.filter(d => d.expense > d.income).length;
+    if (highExpenseDays >= 3) {
+      return '📊 Expenses were high on multiple days';
+    }
+
+    return 'Balanced week';
+  };
+
+  const formatCurrency = (value) => {
+    return `₹${value.toLocaleString('en-IN')}`;
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Transform data for better chart display
+  const transformedData = chartData.map(d => ({
+    ...d,
+    displayDate: formatDate(d.date)
+  }));
+
+  if (loading) {
     return (
-      <div className="min-h-screen w-full bg-dark pb-32">
-        <div className="px-6 py-6 border-b border-border bg-section mb-10">
-          <div className="flex items-center gap-3">
-             <div className="w-2 h-2 bg-neon rounded-full"></div>
-             <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">వారపు లాభాలు <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Analytics)</span></h1>
+      <Layout>
+        <div className="min-h-screen w-full bg-dark flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon mx-auto mb-4"></div>
+            <p className="text-text-primary">లోడ్ అవుతోంది... (Loading...)</p>
           </div>
         </div>
-        <div className="px-6">
-          <div className="bg-card p-12 rounded-[2.5rem] border border-border border-dashed text-center flex flex-col items-center justify-center h-80 w-full shadow-xl">
-              <span className="text-5xl mb-6 opacity-20 grayscale">📊</span>
-              <p className="text-label text-sm font-medium tracking-wide">Historical data synthesis requires at least 3 active days.</p>
-              <p className="text-[10px] text-label/50 uppercase font-black tracking-widest mt-6">Continue logging transactions to unlock</p>
-          </div>
-        </div>
-      </div>
+      </Layout>
     );
   }
 
-  // Find best day
-  const bestDay = data.reduce((max, d) => (d.net > max.net ? d : max), data[0]);
-
-  // Tooltip custom formatter Component
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const isProfit = payload[0].value >= 0;
-      return (
-        <div className="bg-dark p-4 rounded-xl shadow-2xl border border-border text-xs min-w-[150px]">
-          <p className="font-black text-text-primary/40 mb-2 uppercase tracking-widest text-[8px]">{label} Analysis</p>
-          <p className={`font-heading text-xl italic ${isProfit ? 'text-money-pos' : 'text-money-neg'}`}>
-            {isProfit ? '+₹' : '-₹'}{Math.abs(payload[0].value)}
-          </p>
-          <p className="text-[8px] text-label mt-1 uppercase tracking-tighter">Net Cumulative Yield</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
-    <div className="min-h-screen w-full bg-dark pb-32">
-      <div className="px-6 py-6 border-b border-border bg-section mb-10">
-        <div className="flex items-center gap-3">
-           <div className="w-2 h-2 bg-neon rounded-full"></div>
-           <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">వారపు లాభాలు <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Yields)</span></h1>
-        </div>
-      </div>
-
-      <div className="px-6">
-        <div className="bg-card p-6 rounded-2xl border border-border mb-8 text-center shadow-xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-neon/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <span className="text-3xl mb-3 block">🏆</span>
-            <p className="text-text-primary font-medium italic font-heading text-xl">Operational Peak: <span className="font-bold text-neon">{bestDay.dayLabel}</span></p>
-            <p className="text-[10px] text-label uppercase tracking-[0.2em] font-black mt-3">Maximum Net Gain: <span className="text-money-pos">₹{bestDay.net}</span></p>
-        </div>
-
-        <div className="bg-card p-6 rounded-2xl border border-border overflow-hidden shadow-xl">
-          <div style={{ minWidth: '300px', height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data} margin={{ top: 20, right: 10, left: -25, bottom: 0 }}>
-                      <XAxis dataKey="dayLabel" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6F6F6F', fontWeight: 900 }} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6F6F6F' }} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(163,255,18,0.03)' }} />
-                      <Bar 
-                          dataKey="net" 
-                          radius={[6, 6, 6, 6]}
-                          shape={(props) => {
-                              const { x, y, width, height, payload } = props;
-                              // Using CSS variables directly in SVG fill works in modern browsers
-                              const color = payload.net >= 0 ? "var(--money-pos)" : "var(--money-neg)";
-                              const h = Math.abs(height);
-                              return (
-                                  <g>
-                                      <rect x={x} y={y} width={width} height={h} fill={color} rx={8} ry={8} className="transition-all duration-500" />
-                                      {payload.net >= 0 && <rect x={x} y={y} width={width} height={h} fill="url(#neonGradient)" opacity={0.1} rx={8} ry={8} />}
-                                  </g>
-                              );
-                          }}
-                      />
-                      <defs>
-                          <linearGradient id="neonGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#22FF88" stopOpacity={0.8} />
-                              <stop offset="100%" stopColor="#22FF88" stopOpacity={0} />
-                          </linearGradient>
-                      </defs>
-                  </BarChart>
-              </ResponsiveContainer>
+    <Layout>
+      <div className="min-h-screen w-full bg-dark pb-32">
+        {/* Header */}
+        <div className="px-6 py-6 border-b border-border bg-section mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 bg-neon rounded-full shadow-[0_0_10px_rgba(163,255,18,0.5)]"></div>
+            <h1 className="text-2xl font-heading font-medium text-text-primary tracking-tight italic">
+              వారపు చార్ట్ <span className="text-sm font-normal text-label not-italic uppercase tracking-widest ml-2">(Weekly Chart)</span>
+            </h1>
           </div>
         </div>
-      </div>
-    </div>
 
+        <div className="px-6">
+          {error ? (
+            <div className="bg-red-900/20 border border-red-500/30 rounded-2xl p-6 mb-8">
+              <p className="text-red-400 text-sm">{error}</p>
+              <button
+                onClick={fetchChartData}
+                className="mt-4 px-4 py-2 bg-neon text-dark rounded-lg font-semibold text-sm hover:shadow-lg transition-all"
+              >
+                Retry
+              </button>
+            </div>
+          ) : null}
+
+          {chartData.length === 0 ? (
+            <div className="bg-card p-12 rounded-[2rem] border border-border border-dashed text-center flex flex-col items-center justify-center h-80 shadow-2xl relative overflow-hidden group hover:border-neon/30 transition-all">
+              <div className="absolute inset-0 bg-neon/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="text-5xl mb-6 opacity-20">📊</span>
+              <p className="text-text-secondary text-sm font-heading italic tracking-wide">
+                చార్ట్ డేటా ఇంకా లేదు
+              </p>
+              <p className="text-text-secondary text-sm font-heading italic tracking-wide mt-2">
+                (No chart data available yet)
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-3 gap-3 mb-8">
+                {/* Income Card */}
+                <div className="bg-card border border-border rounded-2xl p-4 shadow-lg hover:border-neon/30 transition-all">
+                  <div className="text-[9px] uppercase font-black tracking-widest text-label mb-2">
+                    ఆదాయం
+                  </div>
+                  <div className="text-lg font-heading font-bold text-money-pos">
+                    {formatCurrency(totals.totalIncome)}
+                  </div>
+                  <div className="text-[8px] text-label mt-1">Income</div>
+                </div>
+
+                {/* Expense Card */}
+                <div className="bg-card border border-border rounded-2xl p-4 shadow-lg hover:border-neon/30 transition-all">
+                  <div className="text-[9px] uppercase font-black tracking-widest text-label mb-2">
+                    ఖర్చులు
+                  </div>
+                  <div className="text-lg font-heading font-bold text-money-neg">
+                    {formatCurrency(totals.totalExpense)}
+                  </div>
+                  <div className="text-[8px] text-label mt-1">Expense</div>
+                </div>
+
+                {/* Profit Card */}
+                <div className={`bg-card border rounded-2xl p-4 shadow-lg transition-all ${
+                  totals.totalProfit >= 0
+                    ? 'border-money-pos hover:border-money-pos/50'
+                    : 'border-money-neg hover:border-money-neg/50'
+                }`}>
+                  <div className="text-[9px] uppercase font-black tracking-widest text-label mb-2">
+                    లాభం
+                  </div>
+                  <div className={`text-lg font-heading font-bold ${
+                    totals.totalProfit >= 0 ? 'text-money-pos' : 'text-money-neg'
+                  }`}>
+                    {formatCurrency(totals.totalProfit)}
+                  </div>
+                  <div className="text-[8px] text-label mt-1">Profit</div>
+                </div>
+              </div>
+
+              {/* Bar Chart - Income vs Expense */}
+              <div className="bg-card border border-border rounded-2xl p-4 mb-6 shadow-xl">
+                <h3 className="text-sm font-heading font-bold text-text-primary mb-4 uppercase tracking-widest">
+                  ఆదాయ vs ఖర్చు
+                </h3>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={transformedData} margin={{ top: 10, right: 10, left: 0, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(163,255,18,0.1)" />
+                    <XAxis
+                      dataKey="displayDate"
+                      stroke="rgba(255,255,255,0.5)"
+                      tick={{ fontSize: 11 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1a1a1a',
+                        border: '1px solid rgba(163,255,18,0.3)',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value) => formatCurrency(value)}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Bar dataKey="income" fill="#22c55e" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="expense" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Line Chart - Profit Trend */}
+              <div className="bg-card border border-border rounded-2xl p-4 mb-6 shadow-xl">
+                <h3 className="text-sm font-heading font-bold text-text-primary mb-4 uppercase tracking-widest">
+                  లాభ ట్రెండ్
+                </h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={transformedData} margin={{ top: 10, right: 10, left: 0, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(163,255,18,0.1)" />
+                    <XAxis
+                      dataKey="displayDate"
+                      stroke="rgba(255,255,255,0.5)"
+                      tick={{ fontSize: 11 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fontSize: 11 }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#1a1a1a',
+                        border: '1px solid rgba(163,255,18,0.3)',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value) => formatCurrency(value)}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="profit"
+                      stroke="#a3ff12"
+                      strokeWidth={2}
+                      dot={{ fill: '#a3ff12', r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Trend Insight */}
+              <div className="bg-section border border-border rounded-2xl p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-1 h-6 bg-neon rounded-full mt-1 flex-shrink-0"></div>
+                  <div>
+                    <p className="text-sm text-text-primary font-heading font-medium">
+                      {getTrendInsight()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </Layout>
   );
 };
 

@@ -2,33 +2,37 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/jwt');
-const { collections, ObjectId } = require('../utils/mongoClient');
+const User = require('../models/User');
+const Helper = require('../models/Helper');
 
 // Owner Signup
 router.post('/signup', async (req, res) => {
   try {
     const { email, password, name } = req.body;
     
-    // Use Supabase auth
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name }
-      }
-    });
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Email, password, and name required' });
+    }
 
-    if (error) return res.status(400).json({ error: error.message });
+    // Check if user already exists
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
 
-    const token = generateToken(data.user, 'owner');
+    // Create new user
+    user = new User({ email, password, name });
+    await user.save();
+
+    const token = generateToken({ id: user._id }, 'owner');
     
     res.json({
-      user: data.user,
-      session: data.session,
+      user: { id: user._id, email: user.email, name: user.name },
       token,
       role: 'owner'
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -38,22 +42,29 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
 
-    if (error) return res.status(401).json({ error: error.message });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-    const token = generateToken(data.user, 'owner');
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = generateToken({ id: user._id }, 'owner');
     
     res.json({
-      user: data.user,
-      session: data.session,
+      user: { id: user._id, email: user.email, name: user.name },
       token,
       role: 'owner'
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -63,32 +74,34 @@ router.post('/helper-login', async (req, res) => {
   try {
     const { owner_user_id, pin } = req.body;
     
-    const { data: helper, error } = await supabase
-      .from('helpers')
-      .select('*')
-      .eq('owner_user_id', owner_user_id)
-      .eq('is_active', true)
-      .single();
+    if (!owner_user_id || !pin) {
+      return res.status(400).json({ error: 'Owner ID and PIN required' });
+    }
 
-    if (error || !helper) {
+    const helper = await Helper.findOne({ 
+      owner_id: owner_user_id, 
+      is_active: true 
+    });
+
+    if (!helper) {
       return res.status(401).json({ error: 'Invalid helper credentials' });
     }
 
-    const isMatch = await bcrypt.compare(pin, helper.pin_hash);
-    
+    const isMatch = await helper.comparePIN(pin);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid pin' });
+      return res.status(401).json({ error: 'Invalid PIN' });
     }
 
-    const shadowUser = { id: helper.id }; // Helper doesn't have true auth ID, use helper ID
-    const token = generateToken(shadowUser, 'helper');
+    const token = generateToken({ id: helper._id, owner_id: owner_user_id }, 'helper');
     
     res.json({
       token,
       role: 'helper',
-      helper_name: helper.helper_name
+      helper_name: helper.helper_name,
+      owner_id: owner_user_id
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });

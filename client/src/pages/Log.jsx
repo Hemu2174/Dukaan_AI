@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const Log = () => {
   const navigate = useNavigate();
   const [listening, setListening] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [status, setStatus] = useState("Tap to Speak");
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,16 +23,28 @@ const Log = () => {
 
   // STEP 1 & 6 — IMPLEMENT SPEECH RECOGNITION
   const startListening = () => {
-    if (isListeningRef.current) return;
-
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       console.error("Speech Recognition not supported in this browser");
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    // Store recognition instance globally to reuse
+    if (!window.recognitionInstance) {
+      window.recognitionInstance = new SpeechRecognition();
+    }
+    
+    const recognition = window.recognitionInstance;
     speechRef.current = recognition;
+
+    // TOGGLE: Stop if already listening
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+      setListening(false);
+      setStatus("Tap to Speak");
+      return;
+    }
     
     recognition.lang = "te-IN"; // Telugu
     recognition.continuous = true;   // IMPORTANT
@@ -41,6 +54,7 @@ const Log = () => {
     recognition.onstart = () => {
       isListeningRef.current = true;
       setListening(true);
+      setIsListening(true);
       setStatus("🎤 Listening...");
     };
 
@@ -61,7 +75,10 @@ const Log = () => {
     recognition.onerror = (event) => {
       console.log("Speech error:", event.error);
       
-      if (event.error === "aborted") return;
+      if (event.error === "aborted") {
+        setIsListening(false);
+        return;
+      }
       
       if (event.error === "no-speech") {
         setStatus("Didn't catch that, try again");
@@ -72,12 +89,14 @@ const Log = () => {
       }
       
       setListening(false);
+      setIsListening(false);
       isListeningRef.current = false;
     };
 
     recognition.onend = () => {
       isListeningRef.current = false;
       setListening(false);
+      setIsListening(false);
       if (!inputText) {
         setStatus("Tap mic and speak clearly");
       }
@@ -88,6 +107,7 @@ const Log = () => {
     } catch (e) {
         console.error(e);
         isListeningRef.current = false;
+        setIsListening(false);
     }
   };
 

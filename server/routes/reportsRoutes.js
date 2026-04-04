@@ -1,21 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { collections, ObjectId } = require('../utils/mongoClient');
+const Transaction = require('../models/Transaction');
 const { generateSummary } = require('../services/aiService');
 
 // GET /api/reports/daily-summary
 router.get('/daily-summary', async (req, res) => {
   try {
-    let ownerId = req.user.user_id;
+    let user_id = req.user.id;
 
-    // Determine owner ID if caller is a helper
     if (req.user.role === 'helper') {
-        const { data: helper } = await supabase
-          .from('helpers')
-          .select('owner_user_id')
-          .eq('id', req.user.user_id)
-          .single();
-        if (helper) ownerId = helper.owner_user_id;
+      user_id = req.user.owner_id;
     }
 
     const today = new Date();
@@ -23,16 +17,11 @@ router.get('/daily-summary', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const { data: transactions, error } = await supabase
-      .from('transactions')
-      .select('amount, type, payment_method')
-      .eq('user_id', ownerId)
-      .gte('created_at', today.toISOString())
-      .lt('created_at', tomorrow.toISOString());
+    const transactions = await Transaction.find({
+      user_id,
+      created_at: { $gte: today, $lt: tomorrow }
+    });
 
-    if (error) throw error;
-
-    // Strict Backend Logic
     let income = 0;
     let expense = 0;
     let cash_total = 0;
@@ -54,7 +43,6 @@ router.get('/daily-summary', async (req, res) => {
 
     const profit = income - expense;
 
-    // Fallback Rule
     if (transactions.length < 3) {
       return res.json({
         income,
@@ -67,49 +55,32 @@ router.get('/daily-summary', async (req, res) => {
       });
     }
 
-    // AI Call
     const metrics = { income, expense, profit, cash_total, upi_total, udhari_total };
     let summaryText = await generateSummary(metrics);
 
-    // Validation (VERY IMPORTANT)
-    // Check if AI numbers match backend.
-    const expected = { income, expense, profit, cash_total, upi_total, udhari_total };
-    
-    // We fed explicit string digits. Let's see if 1% mismatch rule triggers.
-    // Given the prompt asks to check mismatch > 1%:
-    let isHallucinated = false;
-    let finalSummary = summaryText;
-
-    // Use a regex to extract all numbers from the text
     const extractedNumbers = summaryText.match(/\d+(?:\.\d+)?/g) || [];
     
-    // Just to perfectly abide by "If mismatch > 1%, replace":
-    // It's safest to simply append the backend verified sentence entirely and replace the AI's math segment 
-    // if any core number isn't perfectly present.
-    // (A 1% mismatch logic is explicitly requested)
-
     const baseRequired = [income, expense, profit];
+    let isHallucinated = false;
+    
     for (const val of baseRequired) {
-        if (val === 0) continue; // 0 might be omitted or written as word sometimes
-        // Is there any extracted number within 1% of val?
-        const hasMatched = extractedNumbers.some(numStr => {
-            const num = parseFloat(numStr);
-            const diff = Math.abs(num - val);
-            return (diff / val) <= 0.01;
-        });
+      if (val === 0) continue;
+      const hasMatched = extractedNumbers.some(numStr => {
+        const num = parseFloat(numStr);
+        const diff = Math.abs(num - val);
+        return (diff / val) <= 0.01;
+      });
 
-        if (!hasMatched) {
-            isHallucinated = true;
-            break;
-        }
+      if (!hasMatched) {
+        isHallucinated = true;
+        break;
+      }
     }
 
+    let finalSummary = summaryText;
     if (isHallucinated) {
-        // REPLACE numbers by giving a fully overridden summary appended 
-        // Or literally string-replacing any numbers (dangerous to telugu text flow).
-        // Let's strip all numbers from the AI text (or replace them) and attach the true exact metric sentence!
-        finalSummary = summaryText.replace(/\d+(?:\.\d+)?/g, 'X') + 
-          `\n\n(సరిదిద్దిన లెక్కలు: ఆదాయం ₹${income}, ఖర్చులు ₹${expense}, లాభం ₹${profit})`;
+      finalSummary = summaryText.replace(/\d+(?:\.\d+)?/g, 'X') + 
+        `\n\n(సరిదిద్దిన లెక్కలు: ఆదాయం ₹${income}, ఖర్చులు ₹${expense}, లాభం ₹${profit})`;
     }
 
     res.json({
