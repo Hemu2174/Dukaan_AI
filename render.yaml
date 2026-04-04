@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: dukaan-ai-backend
+    runtime: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: JWT_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+
+  - type: web
+    name: dukaan-ai-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://dukaan-ai-backend.onrender.com/api
