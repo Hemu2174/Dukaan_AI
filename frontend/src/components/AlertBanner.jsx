@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const AlertBanner = () => {
   const [alertData, setAlertData] = useState(null);
   const [dismissed, setDismissed] = useState(false);
@@ -7,7 +9,7 @@ const AlertBanner = () => {
   useEffect(() => {
     const checkAlerts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/alerts/weekly', {
+        const res = await fetch(`${API_URL}/alerts/weekly`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });

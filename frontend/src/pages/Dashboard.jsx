@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import AlertBanner from '../components/AlertBanner';
 import ReorderBanner from '../components/ReorderBanner';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const TransactionCard = ({ t }) => {
   const isIncome = t.type === 'income';
   const methodColor =
@@ -56,9 +58,9 @@ const Dashboard = () => {
     const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
     try {
       const [dashRes, txRes, stockRes] = await Promise.all([
-        fetch('/api/transactions/dashboard', { headers }),
-        fetch('/api/transactions/today', { headers }),
-        fetch('/api/products/reorder-alerts', { headers }),
+        fetch(`${API_URL}/transactions/dashboard`, { headers }),
+        fetch(`${API_URL}/transactions/today`, { headers }),
+        fetch(`${API_URL}/products/reorder-alerts`, { headers }),
       ]);
 
       if (dashRes.ok) {

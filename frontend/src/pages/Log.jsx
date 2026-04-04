@@ -102,7 +102,7 @@ const Log = () => {
 
       const token = localStorage.getItem('token');
 
-      const parseRes = await fetch('/api/transactions/parse', {
+      const parseRes = await fetch(`${API_URL}/transactions/parse`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ const Log = () => {
       setStatus('💾 Saving...');
       const token = localStorage.getItem('token');
 
-      const saveRes = await fetch('/api/transactions', {
+      const saveRes = await fetch(`${API_URL}/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
